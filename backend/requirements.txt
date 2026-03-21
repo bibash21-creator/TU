@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+toml
+edge-tts
+PyPDF2
+pytesseract
+Pillow
+python-multipart
