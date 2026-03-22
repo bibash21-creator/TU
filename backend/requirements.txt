@@ -1,8 +1,11 @@
 fastapi
 uvicorn
+pydantic
+pydantic-settings
 toml
 edge-tts
 PyPDF2
 pytesseract
 Pillow
 python-multipart
+python-dotenv

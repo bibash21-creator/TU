@@ -1,10 +1,28 @@
 import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Security Constants
-ADMIN_USER = "admin"
-ADMIN_PASS = "REDACTED"
-ADMIN_TOKEN = "REDACTED"
+class Settings(BaseSettings):
+    # App Settings
+    PROJECT_NAME: str = "Nova Oracle"
+    VERSION: str = "2.2.0"
+    DEBUG: bool = True
+    PORT: int = 9099
+    HOST: str = "0.0.0.0"
 
-# Base Directory Setup
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RESULTS_FILE = os.path.join(BASE_DIR, "results.toml")
+    # Security
+    ADMIN_USER: str = "admin"
+    ADMIN_PASS: str = "REDACTED"
+    ADMIN_TOKEN: str = "REDACTED"
+    SECRET_KEY: str = "REDACTED"
+
+    # Storage
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    RESULTS_FILE: str = os.path.join(BASE_DIR, "results.toml")
+
+    # CORS
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"]
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+# Global Settings Instance
+settings = Settings()

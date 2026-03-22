@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from app.schemas.result import ResultEntry
 from app.utils.storage import load_results, save_results
+from app.core.config import settings
 
 router = APIRouter(tags=["results"])
 
@@ -8,44 +9,84 @@ router = APIRouter(tags=["results"])
 async def query_result(roll_number: str):
     results = load_results()
     
-    # Clean roll number for comparison
+    # Simple formatting for the voice engine to read digits one-by-one
+    roll_spaced = " ".join(roll_number.strip().upper())
     roll_number = roll_number.strip().upper()
     
     for campus_data in results:
         if roll_number in campus_data["roll_numbers"]:
-            campus = campus_data["campus"]
+            semester = campus_data.get("semester", "the")
+            faculty = campus_data.get("faculty", "your faculty")
+            year_label = campus_data.get("year", "current batch")
+            # Replace B.S. with Bikram Sambat for proper pronunciation
+            year_label = year_label.replace("B.S.", "").strip()
+            year_label = f"{year_label} Bikram Sambat"
+            
             if campus_data.get("status") == "Expelled":
-                reason = campus_data.get('reason')
+                reason = campus_data.get('reason', 'Examination Irregularity')
                 return {
                     "roll_number": roll_number,
-                    "status": "Expelled",
-                    "campus": campus,
+                    "status": "Failed",
+                    "year": year_label,
+                    "semester": semester,
                     "reason": reason,
-                    "message_en": f"Oof, bad news! 💀 Roll {roll_number} got expelled for '{reason}'. Better luck next time, fam.",
-                    "message_np": f"ओहो, नराम्रो खबर! 💀 रोल नम्बर {roll_number} परीक्षामा {reason} को कारणले आउट भएको छ। अर्को पटक प्रयास गर साथी।",
-                    "message": f"Expelled: {reason}"
+                    "message_en": f"I regret to inform you that roll number {roll_spaced} from the {year_label} {semester} of {faculty} has failed or been withheld for {reason}.",
+                    "message_np": f"माफ गर्नुहोस्, रोल नम्बर {roll_number} को {year_label} {semester} {faculty} को नतिजा सफल हुन सकेन वा {reason} को कारणले रोकिएको छ।",
+                    "message": f"Failed {year_label}: {reason}"
                 }
+                
             return {
                 "roll_number": roll_number,
                 "status": "Passed",
-                "campus": campus,
-                "semester": campus_data.get("semester", "N/A"),
-                "faculty": campus_data.get("faculty", "N/A"),
-                "message_en": f"Yooo! Big W! 🔥 Roll {roll_number} just cleared {campus_data.get('semester', 'the')} exams for {campus_data.get('faculty', 'your program')} at {campus}. You're absolute fire! 🚀",
-                "message_np": f"बधाई छ साथी! 🔥 रोल नम्बर {roll_number}, तिमीले {campus} बाट {campus_data.get('semester', '')} {campus_data.get('faculty', '')} परीक्षा पास गर्यौ। कडा छौ है! 🚀",
-                "message": f"Passed {campus_data.get('semester', '')} from {campus}!"
+                "year": year_label,
+                "semester": semester,
+                "faculty": faculty,
+                "message_en": f"Congratulations. Roll number {roll_spaced} has successfully passed the {year_label} {semester} assessment for {faculty}.",
+                "message_np": f"बधाई छ। रोल नम्बर {roll_number} ले {year_label} को {semester} {faculty} तहको परीक्षामा सफलता प्राप्त गरेको छ।",
+                "message": f"Passed {year_label} {semester}!"
             }
             
     return {
         "roll_number": roll_number,
         "status": "Not Found",
-        "message_en": f"404: Roll {roll_number} not found. 🧐 Check that digits again, bestie!",
-        "message_np": f"माफ गर साथी, रोल नम्बर {roll_number} भेटिएन। 🧐 फेरि एकचोटी चेक गर न है।",
+        "message_en": f"I could not find any record for roll number {roll_spaced}. Please double check the number or wait for the system to update.",
+        "message_np": f"प्रणालीमा हामीले रोल नम्बर {roll_number} को कुनै पनि रेकर्ड फेला पार्न सकेनौं। कृपया आफ्नो नम्बर फेरि जाँच गर्नुहोला।",
         "message": "Not found in our database."
     }
 
+@router.get("/list")
+async def list_results(x_admin_token: str = Header(None)):
+    if x_admin_token != settings.ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="Forbidden: Admin access required")
+    return load_results()
+
+@router.delete("/delete")
+async def delete_result(campus: str, semester: str, faculty: str, year: str, x_admin_token: str = Header(None)):
+    if x_admin_token != settings.ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="Forbidden: Admin access required")
+    
+    results = load_results()
+    original_count = len(results)
+    
+    # Filter out the matching entry
+    updated_results = [r for r in results if not (
+        r.get("campus") == campus and 
+        r.get("semester") == semester and 
+        r.get("faculty") == faculty and 
+        r.get("year") == year
+    )]
+    
+    if len(updated_results) == original_count:
+        raise HTTPException(status_code=404, detail="Result entry not found")
+        
+    save_results(updated_results)
+    return {"status": "success", "message": f"Results for {campus} ({semester}, {year}) deleted."}
+
 @router.post("/publish")
-async def publish_result(entry: ResultEntry):
+async def publish_result(entry: ResultEntry, x_admin_token: str = Header(None)):
+    if x_admin_token != settings.ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="Forbidden: Invalid Oracle Token")
+    
     results = load_results()
     results.append(entry.dict())
     save_results(results)
