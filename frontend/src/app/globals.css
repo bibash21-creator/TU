@@ -30,12 +30,12 @@
 }
 
 [data-theme="light"] {
-  --bg: #fafafc;
-  --text: #1a1a24;
-  --panel: rgba(255, 255, 255, 0.7);
-  --border: rgba(0, 0, 0, 0.06);
-  --accent: #e11d48;
-  --sub: rgba(0, 0, 0, 0.5);
+  --bg: #ffffff;
+  --text: #0a0a0f;
+  --panel: rgba(255, 255, 255, 0.9);
+  --border: rgba(0, 0, 0, 0.08);
+  --accent: #f43f8a;
+  --sub: rgba(10, 10, 15, 0.6);
 }
 
 body {
