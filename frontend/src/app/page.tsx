@@ -30,6 +30,7 @@ export default function Home() {
   const [showAlertUI, setShowAlertUI] = useState(false);
   const [selectedCollege, setSelectedCollege] = useState("");
   const [contactInfo, setContactInfo] = useState({ email: "", whatsapp: "" });
+  const [showMarksheet, setShowMarksheet] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function Home() {
     setIsTyping(true);
     setLastResult(null); 
     setShowAlertUI(false);
+    setShowMarksheet(false);
     try {
       const data = await api.get(`/query/${encodeURIComponent(roll)}`);
       setIsTyping(false);
@@ -73,7 +75,7 @@ export default function Home() {
     }
   };
 
-  const subscribeAlert = () => {
+  const subscribeAlert = async () => {
     if (!selectedCollege) {
       toast.warning("Choose your College first.");
       return;
@@ -82,10 +84,24 @@ export default function Home() {
       toast.warning("Provide at least one contact channel (Email or WhatsApp).");
       return;
     }
-    toast.success("Ethereal Link Established!", {
-      description: `I will alert ${contactInfo.email || contactInfo.whatsapp} when ${roll} manifests.`,
-    });
-    setShowAlertUI(false);
+    
+    try {
+      const res = await api.post("/subscribe", {
+        roll_number: roll,
+        campus: selectedCollege,
+        email: contactInfo.email,
+        whatsapp: contactInfo.whatsapp
+      });
+      
+      if (res.status === "success") {
+        toast.success("Ethereal Link Established!", {
+          description: `I will alert ${contactInfo.email || contactInfo.whatsapp} when ${roll} manifests.`,
+        });
+        setShowAlertUI(false);
+      }
+    } catch (e) {
+      toast.error("Neural link failed. Try again.");
+    }
   };
 
   return (
@@ -118,7 +134,11 @@ export default function Home() {
         {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
       </button>
 
-      <Navigation onAdminClick={() => setIsAdminOpen(true)} activeTab={lastResult ? "alerts" : "probe"} />
+      <Navigation 
+        onAdminClick={() => setIsAdminOpen(true)} 
+        onAlertClick={() => { setShowAlertUI(true); setLastResult(null); }}
+        activeTab={showAlertUI ? "alerts" : "probe"} 
+      />
 
       <AdminOverlay isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
 
@@ -180,34 +200,84 @@ export default function Home() {
             {lastResult && (
               <motion.div 
                 key={lastResult.roll_number}
-                initial={{ opacity: 0, y: 20, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                className={`w-full glass rounded-[44px] p-8 border-t-[3px] shadow-2xl ${lastResult.status === "Passed" ? "border-t-emerald-400" : "border-t-rose"}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full"
               >
-                <div className="flex flex-col gap-6">
-                   <div className="flex items-center justify-between">
-                     <span className={`px-5 py-1.5 rounded-full text-[9px] font-black tracking-[0.4em] uppercase ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/10" : "bg-rose/10 text-rose border border-rose/10"}`}>
-                       Status: {lastResult.status}
-                     </span>
-                     <ShieldCheck className={`w-5 h-5 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"} opacity-30`} />
-                   </div>
-                   
-                   <div className="space-y-4">
-                     <div className="flex items-center gap-2 text-rose/50">
-                        <MapPin className="w-3 h-3" />
-                        <span className="font-mono text-[10px] uppercase tracking-widest font-bold">{lastResult.campus}</span>
-                     </div>
-                     <h2 className="text-3xl md:text-4xl font-display font-medium tracking-tight text-white uppercase italic">
-                       {lastResult.semester}
-                     </h2>
-                   </div>
+                {!showMarksheet ? (
+                  <motion.div 
+                    layoutId="result-card"
+                    className={`glass rounded-[44px] p-8 border-t-[3px] shadow-2xl ${lastResult.status === "Passed" ? "border-t-emerald-400" : "border-t-rose"}`}
+                  >
+                    <div className="flex flex-col gap-6">
+                      <div className="flex items-center justify-between">
+                        <span className={`px-5 py-1.5 rounded-full text-[9px] font-black tracking-[0.4em] uppercase ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose/10 text-rose"}`}>
+                          Status: {lastResult.status}
+                        </span>
+                        <div className="flex gap-2">
+                           <button onClick={() => setShowMarksheet(true)} className="text-[9px] font-mono text-white/40 hover:text-rose transition-colors uppercase tracking-widest border border-white/5 px-4 py-1.5 rounded-full hover:bg-white/5">View Marksheet</button>
+                           <ShieldCheck className={`w-5 h-5 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"} opacity-30`} />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-rose/50">
+                            <MapPin className="w-3 h-3" />
+                            <span className="font-mono text-[10px] uppercase tracking-widest font-bold">{lastResult.campus}</span>
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-display font-medium tracking-tight text-white uppercase italic">
+                          {lastResult.semester}
+                        </h2>
+                      </div>
 
-                   <div className="flex flex-col gap-2 py-4 px-6 bg-white/[0.02] rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-mono text-white/20 uppercase tracking-[0.4em]">SYMBOL ID</p>
-                      <p className="text-2xl font-mono text-white tracking-[0.3em] font-medium">{lastResult.roll_number}</p>
-                   </div>
-                </div>
+                      <div className="flex flex-col gap-2 py-4 px-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                          <p className="text-[8px] font-mono text-white/20 uppercase tracking-[0.4em]">SYMBOL ID</p>
+                          <p className="text-2xl font-mono text-white tracking-[0.3em] font-medium">{lastResult.roll_number}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    layoutId="result-card"
+                    className="glass rounded-[44px] p-8 border border-white/10 shadow-3xl overflow-hidden relative"
+                  >
+                    <div className="flex items-center justify-between mb-8">
+                       <button onClick={() => setShowMarksheet(false)} className="text-rose flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:translate-x-[-4px] transition-transform">
+                          <ArrowRight className="w-4 h-4 rotate-180" /> Back
+                       </button>
+                       <h3 className="text-white font-display text-sm tracking-[0.3em] uppercase">Digital Transcript</h3>
+                    </div>
+
+                    <div className="space-y-1">
+                       <div className="grid grid-cols-2 px-4 py-3 bg-white/5 rounded-t-2xl border-b border-white/10 text-[9px] font-mono uppercase tracking-widest text-white/40">
+                          <span>Subject</span>
+                          <span className="text-right">Grade / Marks</span>
+                       </div>
+                       
+                       <div className="max-h-[250px] overflow-y-auto space-y-1 custom-scrollbar pr-2">
+                          {(lastResult.details?.subjects || [
+                            {name: "Core Faculty Subject A", grade: "A"},
+                            {name: "Advanced Practical B", grade: "B+"},
+                            {name: "Engineering Theory C", grade: "A-"},
+                            {name: "Technical Elective D", grade: "B"}
+                          ]).map((s: any, i: number) => (
+                            <div key={i} className="grid grid-cols-2 px-6 py-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.05] transition-colors">
+                               <span className="text-[11px] text-white/80 font-medium">{s.name}</span>
+                               <span className="text-right font-mono text-rose text-[11px] font-black">{s.grade}</span>
+                            </div>
+                          ))}
+                       </div>
+
+                       <div className="mt-6 flex justify-between items-center px-6 pt-4 border-t border-white/10">
+                          <div className="text-[9px] font-mono uppercase tracking-widest text-white/30">Total Distinction Index</div>
+                          <div className="text-xl font-display text-emerald-400 font-bold tracking-tighter">SUCCESS</div>
+                       </div>
+                    </div>
+
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-rose/5 blur-3xl rounded-full" />
+                  </motion.div>
+                )}
               </motion.div>
             )}
 

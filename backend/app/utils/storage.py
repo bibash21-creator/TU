@@ -9,7 +9,7 @@ engine = create_engine(settings.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# SQLAlchemy Model
+# SQLAlchemy Models
 class ResultTable(Base):
     __tablename__ = "results"
     id = Column(Integer, primary_key=True, index=True)
@@ -19,7 +19,16 @@ class ResultTable(Base):
     year = Column(String)
     status = Column(String, default="Passed")
     reason = Column(String, nullable=True)
-    roll_numbers_json = Column(Text)  # Store list as JSON string for compatibility
+    roll_numbers_json = Column(Text)  # List of rolls
+    details_json = Column(Text, nullable=True) # Map of roll: {marks, etc.}
+
+class SubscriptionTable(Base):
+    __tablename__ = "subscriptions"
+    id = Column(Integer, primary_key=True, index=True)
+    roll_number = Column(String, index=True)
+    campus = Column(String)
+    email = Column(String, nullable=True)
+    whatsapp = Column(String, nullable=True)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -37,7 +46,8 @@ def load_results():
                 "year": r.year,
                 "status": r.status,
                 "reason": r.reason,
-                "roll_numbers": json.loads(r.roll_numbers_json)
+                "roll_numbers": json.loads(r.roll_numbers_json) if r.roll_numbers_json else [],
+                "details": json.loads(r.details_json) if r.details_json else {}
             })
         return results
     finally:
@@ -46,8 +56,6 @@ def load_results():
 def save_results(results):
     db = SessionLocal()
     try:
-        # For simplicity, this clear-and-save approach matches the file behavior
-        # In a real app, we'd use proper INSERT/UPDATE
         db.query(ResultTable).delete()
         for r in results:
             new_entry = ResultTable(
@@ -57,9 +65,25 @@ def save_results(results):
                 year=r.get("year"),
                 status=r.get("status", "Passed"),
                 reason=r.get("reason"),
-                roll_numbers_json=json.dumps(r.get("roll_numbers", []))
+                roll_numbers_json=json.dumps(r.get("roll_numbers", [])),
+                details_json=json.dumps(r.get("details", {}))
             )
             db.add(new_entry)
         db.commit()
+    finally:
+        db.close()
+
+def subscribe_user(roll_number, campus, email=None, whatsapp=None):
+    db = SessionLocal()
+    try:
+        sub = SubscriptionTable(
+            roll_number=roll_number,
+            campus=campus,
+            email=email,
+            whatsapp=whatsapp
+        )
+        db.add(sub)
+        db.commit()
+        return True
     finally:
         db.close()
