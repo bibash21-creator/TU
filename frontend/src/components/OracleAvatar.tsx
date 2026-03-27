@@ -1,9 +1,15 @@
 "use client";
 
-import Spline from "@splinetool/react-spline";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, Suspense } from "react";
 import { Sparkles, Activity, ShieldCheck, Zap } from "lucide-react";
+
+// Spline MUST be loaded dynamically with SSR disabled to avoid Vercel build errors.
+const Spline = dynamic(() => import("@splinetool/react-spline"), { 
+    ssr: false,
+    loading: () => <div className="text-white/20 font-mono text-xs animate-pulse">Initializing 3D Core...</div>
+});
 
 interface OracleAvatarProps {
   isSpeaking: boolean;
