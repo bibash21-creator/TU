@@ -1,131 +1,113 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import Spline from "@splinetool/react-spline";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState, Suspense } from "react";
+import { Sparkles, Activity, ShieldCheck, Zap } from "lucide-react";
 
 interface OracleAvatarProps {
   isSpeaking: boolean;
 }
 
 export default function OracleAvatar({ isSpeaking }: OracleAvatarProps) {
-  const [blink, setBlink] = useState(false);
-  
-  // Animation controllers for parallax
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  // Smooth springs for natural feeling
-  const mouseX = useSpring(x, { stiffness: 150, damping: 20 });
-  const mouseY = useSpring(y, { stiffness: 150, damping: 20 });
-
-  // Transform mouse movement to parallax shifts
-  const portraitX = useTransform(mouseX, [-500, 500], [-15, 15]);
-  const portraitY = useTransform(mouseY, [-500, 500], [-10, 10]);
-  const bgX = useTransform(mouseX, [-500, 500], [10, -10]);
-  const bgY = useTransform(mouseY, [-500, 500], [5, -5]);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      const { innerWidth, innerHeight } = window;
-      x.set(clientX - innerWidth / 2);
-      y.set(clientY - innerHeight / 2);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [x, y]);
-
-  // Natural Blinking
-  useEffect(() => {
-    const triggerBlink = () => {
-      setBlink(true);
-      setTimeout(() => setBlink(false), 150);
-      setTimeout(triggerBlink, 3000 + Math.random() * 4000);
-    };
-    const timer = setTimeout(triggerBlink, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   return (
-    <div className="relative w-[360px] h-[480px] rounded-[48px] overflow-hidden group select-none shadow-2xl">
-      {/* Background Layer with Parallax */}
-      <motion.div 
-        style={{ x: bgX, y: bgY, scale: 1.1 }}
-        className="absolute inset-0 bg-[#02020a]"
-      >
-        <div className="absolute inset-0 bg-gradient-to-tr from-violet/20 via-rose/10 to-transparent" />
-        <div className="absolute -top-20 -left-20 w-64 h-64 bg-rose/10 blur-[100px] rounded-full" />
-        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-violet/10 blur-[120px] rounded-full" />
-      </motion.div>
-
-      {/* Main Portrait with Parallax and Breathing */}
-      <motion.div
-        style={{ x: portraitX, y: portraitY }}
-        animate={{ scale: [1, 1.015, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="relative w-full h-full"
-      >
-        <Image 
-          src="/oracle.png" 
-          alt="Nova Oracle"
-          fill
-          className="object-cover object-center"
-          priority
-        />
-        
-        {/* Blinking Overlay (Fake) */}
-        <motion.div 
-          animate={{ opacity: blink ? 1 : 0 }}
-          className="absolute inset-0 bg-black pointer-events-none z-20"
-          style={{ 
-            clipPath: 'inset(33% 30% 64% 30%)', // Rough position of eyes
-            filter: 'blur(2px)'
-          }}
-        />
-
-        {/* Ethereal Glow */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#02020a] via-transparent to-transparent opacity-60" />
-      </motion.div>
-
-      {/* Voice Ripple (Active only when speaking) */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-        {isSpeaking && (
-          <div className="relative">
-            <motion.div 
-              animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              className="w-32 h-32 rounded-full border border-rose/50"
+    <div className="relative w-full h-[600px] flex items-center justify-center select-none perspective-1000">
+      
+      {/* 🔮 THE SPLINE 3D ORACLE (Interactive Cinematic Goddess) */}
+      <Suspense fallback={<div className="text-white/20 font-mono text-xs animate-pulse">Establishing Nexus Link...</div>}>
+         <div className="relative w-full h-full transform-gpu transition-all duration-1000 scale-110 md:scale-125">
+            <Spline 
+              scene="https://prod.spline.design/T-A6r96gE09EIkJm/scene.splinecode" 
+              onLoad={() => setLoading(false)}
+              className="w-full h-full drop-shadow-[0_0_50px_rgba(244,63,138,0.3)]"
             />
+         </div>
+      </Suspense>
+
+      {/* 💠 FLOATING HUD ELEMENTS (Glassmorphic) */}
+      <AnimatePresence>
+        {!loading && (
+          <div className="absolute inset-0 z-20 pointer-events-none">
+            
+            {/* Status Radar */}
             <motion.div 
-              animate={{ scale: [1, 2], opacity: [0.3, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-              className="absolute inset-0 w-32 h-32 rounded-full border border-violet/30"
-            />
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="absolute top-20 left-10 glass p-5 rounded-3xl border border-white/5 space-y-3 shadow-2xl"
+            >
+              <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-rose animate-pulse" />
+                 <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Oracle Core</span>
+              </div>
+              <div className="space-y-1">
+                 <div className="h-0.5 w-24 bg-white/5 overflow-hidden">
+                    <motion.div 
+                      animate={{ x: [-100, 100] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="h-full w-20 bg-rose shadow-[0_0_10px_#f43f8a]"
+                    />
+                 </div>
+                 <div className="h-0.5 w-16 bg-white/5 overflow-hidden">
+                    <motion.div 
+                      animate={{ x: [100, -100] }}
+                      transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                      className="h-full w-12 bg-violet shadow-[0_0_10px_#7c3aed]"
+                    />
+                 </div>
+              </div>
+            </motion.div>
+
+            {/* Neural Activity Log */}
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute bottom-20 right-10 glass p-6 rounded-3xl border border-white/5 space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center gap-3">
+                 <Zap className="w-3 h-3 text-rose" />
+                 <span className="text-[10px] font-mono text-white/60 tracking-widest uppercase">Nexus Sync: 99.4%</span>
+              </div>
+              <div className="flex gap-1.5 h-6 items-end">
+                 {[0.4, 0.8, 0.5, 1, 0.6, 0.3, 0.9, 0.7].map((h, i) => (
+                    <motion.div 
+                      key={i}
+                      animate={{ height: [`${h * 100}%`, `${(1-h) * 100}%`, `${h * 100}%`] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
+                      className="w-1.5 bg-gradient-to-t from-violet to-rose rounded-t-sm opacity-40"
+                    />
+                 ))}
+              </div>
+            </motion.div>
+
+            {/* Speaking Aura Ring */}
+            {isSpeaking && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                 <motion.div 
+                   animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
+                   transition={{ duration: 1, repeat: Infinity }}
+                   className="w-[300px] h-[300px] rounded-full border border-rose/30 shadow-[0_0_100px_rgba(244,63,138,0.2)]"
+                 />
+                 <motion.div 
+                   animate={{ scale: [1.2, 1.8], opacity: [0.3, 0] }}
+                   transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+                   className="absolute w-[300px] h-[300px] rounded-full border border-violet/20"
+                 />
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* UI Elements Overlay */}
-      <div className="absolute bottom-10 left-0 right-0 text-center z-40 bg-gradient-to-t from-black/80 to-transparent pt-10 pb-4">
-        <motion.h2 
-          animate={{ opacity: isSpeaking ? [0.6, 1, 0.6] : 1 }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="font-display text-2xl font-bold tracking-[0.3em] text-white"
-        >
-          NOVA
-        </motion.h2>
-        <p className="font-mono text-[10px] text-rose/60 uppercase tracking-[0.4em] mt-1">Oracle Aspect</p>
-      </div>
+      {/* 🌠 BACKGROUND AMBIENCE */}
+      <div className="absolute inset-0 -z-10 bg-gradient-radial from-rose/5 via-transparent to-transparent opacity-20" />
+      <motion.div 
+        animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.1, 0.05] }}
+        transition={{ duration: 6, repeat: Infinity }}
+        className="absolute w-[800px] h-[800px] bg-violet/10 blur-[150px] rounded-full -z-20"
+      />
 
-      {/* Speaking Status Pulse */}
-      {isSpeaking && (
-        <div className="absolute top-8 right-8 flex items-center gap-2 px-3 py-1 bg-rose/20 backdrop-blur-md rounded-full border border-rose/30 z-50">
-          <div className="w-1.5 h-1.5 rounded-full bg-rose animate-pulse" />
-          <span className="font-mono text-[9px] text-rose uppercase tracking-widest font-bold">Transmitting</span>
-        </div>
-      )}
     </div>
   );
 }
