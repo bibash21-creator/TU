@@ -29,6 +29,7 @@ export default function Home() {
   const [lastResult, setLastResult] = useState<any>(null);
   const [showAlertUI, setShowAlertUI] = useState(false);
   const [selectedCollege, setSelectedCollege] = useState("");
+  const [contactInfo, setContactInfo] = useState({ email: "", whatsapp: "" });
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -77,97 +78,99 @@ export default function Home() {
       toast.warning("Choose your College first.");
       return;
     }
+    if (!contactInfo.email && !contactInfo.whatsapp) {
+      toast.warning("Provide at least one contact channel (Email or WhatsApp).");
+      return;
+    }
     toast.success("Ethereal Link Established!", {
-      description: `I will alert you when ${roll} appears.`,
+      description: `I will alert ${contactInfo.email || contactInfo.whatsapp} when ${roll} manifests.`,
     });
     setShowAlertUI(false);
   };
 
   return (
-    <main className="relative min-h-screen bg-[var(--bg)] text-[var(--text)] transition-all duration-700 font-body flex flex-col items-center justify-center p-6 md:p-12 overflow-x-hidden">
+    <main className="relative h-screen w-screen bg-[var(--bg)] text-[var(--text)] transition-all duration-700 font-body flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden">
       <Toaster position="top-center" richColors theme={theme} />
       
       {/* Background Blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="blob w-[500px] h-[500px] bg-rose -top-40 -left-40 animate-[blob-drift_12s_infinite]" />
-        <div className="blob w-[600px] h-[600px] bg-violet bottom-0 right-0 opacity-10 animate-[blob-drift_18s_-3s_infinite]" />
+        <div className="blob w-[400px] h-[400px] bg-rose -top-20 -left-20 animate-[blob-drift_12s_infinite]" />
+        <div className="blob w-[500px] h-[500px] bg-violet bottom-0 right-0 opacity-10 animate-[blob-drift_18s_-3s_infinite]" />
       </div>
 
       {/* Simplified Branding */}
-      <header className="fixed top-8 left-10 z-50">
-        <div className="flex items-center gap-4">
-           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose to-violet flex items-center justify-center shadow-lg transform hover:scale-110 active:rotate-12 transition-all cursor-pointer">
-              <Sparkles className="w-5 h-5 text-white" />
+      <header className="fixed top-6 left-8 z-50">
+        <div className="flex items-center gap-3">
+           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose to-violet flex items-center justify-center shadow-lg transform hover:scale-110 active:rotate-12 transition-all cursor-pointer">
+              <Sparkles className="w-4 h-4 text-white" />
            </div>
            <div className="text-left">
-              <h1 className="text-xs font-black tracking-[0.4em] uppercase text-white leading-none">NOVA</h1>
-              <p className="text-[8px] font-mono text-white/30 tracking-widest uppercase mt-1">Witness Engine 3.1</p>
+              <h1 className="text-[10px] font-black tracking-[0.4em] uppercase text-white leading-none">NOVA</h1>
+              <p className="text-[7px] font-mono text-white/30 tracking-widest uppercase mt-1">Witness Engine 3.2</p>
            </div>
         </div>
       </header>
       
-      {/* Theme Toggle Button */}
       <button 
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")} 
-        className="fixed top-10 right-10 p-3 glass rounded-full hover:scale-110 transition-all z-50 text-white/40 hover:text-white border border-white/5"
+        className="fixed top-6 right-8 p-2.5 glass rounded-full hover:scale-110 transition-all z-50 text-white/40 hover:text-white border border-white/5"
       >
-        {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
       </button>
 
-      {/* Floating Navigation */}
       <Navigation onAdminClick={() => setIsAdminOpen(true)} activeTab={lastResult ? "alerts" : "probe"} />
 
       <AdminOverlay isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
 
-      {/* Integrated Workspace: Side-by-Side Flex Layout */}
-      <div className="relative z-10 w-full max-w-[1400px] flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-32 animate-in fade-in zoom-in duration-1000 px-4">
+      {/* Workspace: Full-height, Responsive, Centered */}
+      <div className="relative z-10 w-full max-w-[1240px] flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-24 animate-in fade-in zoom-in duration-700 px-4 scale-90 md:scale-100">
         
-        {/* The Oracle Appearance: Left Side */}
-        <section className="relative scale-[0.9] md:scale-110 lg:scale-125 transition-all">
-           <div className={`absolute -inset-24 rounded-full blur-[120px] transition-all duration-[3000ms] ${isSpeaking ? "bg-rose/30 opacity-40 scale-150 rotate-90" : "bg-violet/10 opacity-10"}`} />
+        {/* Left Side: Oracle Avatar (Slightly Shrunk) */}
+        <section className="relative scale-75 md:scale-90 lg:scale-100 transition-all">
+           <div className={`absolute -inset-16 rounded-full blur-[100px] transition-all duration-[3000ms] ${isSpeaking ? "bg-rose/20 opacity-30 scale-125" : "bg-violet/5 opacity-10"}`} />
            <OracleAvatar isSpeaking={isSpeaking} />
         </section>
 
-        {/* Unified Search and Insight Section: Right Side */}
-        <section className="w-full max-w-[650px] space-y-16">
+        {/* Right Side: Interactions */}
+        <section className="w-full max-w-[500px] space-y-8">
           
-          <div className="space-y-12">
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-display font-bold tracking-tight text-white leading-tight">
+          <div className="space-y-6">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-medium tracking-tight text-white/90 leading-tight">
                Witness your <br/>
-               <em className="bg-gradient-to-r from-rose via-violet to-lavender bg-clip-text text-transparent italic not-italic">Fate.</em>
+               <em className="bg-gradient-to-r from-rose via-violet to-lavender bg-clip-text text-transparent italic not-italic font-black">Academic Fate.</em>
             </h2>
 
             <div className="relative group">
-              <div className="absolute -inset-6 bg-gradient-to-r from-rose/40 via-violet/40 to-transparent rounded-[50px] opacity-0 group-focus-within:opacity-100 transition-opacity blur-3xl" />
-              <div className="relative flex flex-col md:flex-row glass rounded-[44px] p-4 focus-within:ring-4 focus-within:ring-rose/40 transition-all shadow-[0_50px_100px_rgba(0,0,0,0.5)] border border-white/20">
+              <div className="absolute -inset-4 bg-gradient-to-r from-rose/20 via-violet/20 to-transparent rounded-[32px] opacity-0 group-focus-within:opacity-100 transition-opacity blur-2xl" />
+              <div className="relative flex glass rounded-[28px] p-1.5 focus-within:ring-2 focus-within:ring-rose/40 transition-all shadow-xl border border-white/5">
                 <input 
                   type="text"
                   value={roll}
                   onChange={(e) => setRoll(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && askNova()}
-                  placeholder="ENTER SYMBOL ID..."
-                  className="flex-1 bg-transparent px-10 py-7 font-mono text-2xl md:text-3xl tracking-[0.5em] outline-none text-white placeholder:text-white/20 uppercase"
+                  placeholder="SYMBOL ID..."
+                  className="flex-1 bg-transparent px-6 py-4 font-mono text-lg md:text-xl tracking-[0.4em] outline-none text-white placeholder:text-white/10 uppercase"
                 />
                 <button 
                   onClick={askNova}
                   disabled={isTyping}
-                  className="bg-white text-black px-16 md:px-20 py-7 rounded-[32px] font-black text-[16px] md:text-[18px] tracking-[0.4em] uppercase hover:bg-rose hover:text-white active:scale-90 disabled:opacity-50 transition-all flex items-center justify-center gap-4 shadow-2xl hover:shadow-rose/50"
+                  className="bg-white text-black px-8 md:px-10 py-4 rounded-[22px] font-black text-[11px] tracking-widest uppercase hover:bg-rose hover:text-white active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 shadow-inner"
                 >
-                  {isTyping ? "SCANNING" : "REVEAL"} <ArrowRight className="w-6 h-6" />
+                  {isTyping ? "SCAN" : "REVEAL"} <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-center lg:justify-start gap-4">
+            <div className="flex items-center justify-center lg:justify-start gap-3">
                 {["en", "np"].map(l => (
                   <button
                     key={l}
                     onClick={() => setCurrentLang(l)}
-                    className={`text-[9px] font-mono px-5 py-2 rounded-xl border transition-all uppercase tracking-[0.3em] ${
+                    className={`text-[8px] font-mono px-4 py-1.5 rounded-lg border transition-all uppercase tracking-[0.2em] ${
                       currentLang === l ? "border-rose/50 bg-rose/10 text-rose" : "border-white/5 text-white/30 hover:text-white"
                     }`}
                   >
-                    {l === "np" ? "Nepali Translation" : "English Mode"}
+                    {l === "np" ? "नेपाली" : "English"}
                   </button>
                 ))}
             </div>
@@ -177,39 +180,32 @@ export default function Home() {
             {lastResult && (
               <motion.div 
                 key={lastResult.roll_number}
-                initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className={`w-full glass rounded-[54px] p-10 md:p-14 border-t-[4px] shadow-3xl ${lastResult.status === "Passed" ? "border-t-emerald-400" : "border-t-rose"}`}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className={`w-full glass rounded-[44px] p-8 border-t-[3px] shadow-2xl ${lastResult.status === "Passed" ? "border-t-emerald-400" : "border-t-rose"}`}
               >
-                <div className="flex flex-col gap-10 text-center md:text-left">
-                   <div className="flex items-center justify-center md:justify-between px-2">
-                     <span className={`px-8 py-2.5 rounded-full text-[10px] font-black tracking-[0.5em] uppercase border ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose/10 text-rose border-rose/20"}`}>
-                       Result Status: {lastResult.status}
+                <div className="flex flex-col gap-6">
+                   <div className="flex items-center justify-between">
+                     <span className={`px-5 py-1.5 rounded-full text-[9px] font-black tracking-[0.4em] uppercase ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/10" : "bg-rose/10 text-rose border border-rose/10"}`}>
+                       Status: {lastResult.status}
                      </span>
-                     <ShieldCheck className={`hidden md:block w-8 h-8 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"} opacity-40`} />
+                     <ShieldCheck className={`w-5 h-5 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"} opacity-30`} />
                    </div>
                    
-                   <div className="space-y-6">
-                     <div className="flex items-center justify-center md:justify-start gap-2.5 text-rose/60 group">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span className="font-mono text-[11px] uppercase tracking-widest font-bold group-hover:text-rose transition-colors">{lastResult.campus}</span>
+                   <div className="space-y-4">
+                     <div className="flex items-center gap-2 text-rose/50">
+                        <MapPin className="w-3 h-3" />
+                        <span className="font-mono text-[10px] uppercase tracking-widest font-bold">{lastResult.campus}</span>
                      </div>
-                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-medium tracking-tight text-white uppercase leading-[1.1]">
+                     <h2 className="text-3xl md:text-4xl font-display font-medium tracking-tight text-white uppercase italic">
                        {lastResult.semester}
                      </h2>
-                     <div className="flex items-center gap-6 opacity-60">
-                       <span className="h-px bg-white/10 flex-1" />
-                       <p className="font-mono text-[13px] uppercase tracking-[0.4em] text-violet font-black whitespace-nowrap">
-                         {lastResult.year} · {lastResult.faculty}
-                       </p>
-                       <span className="h-px bg-white/10 flex-1" />
-                     </div>
                    </div>
 
-                   <div className="flex flex-col gap-3 py-6 px-10 bg-white/[0.02] rounded-3xl border border-white/5 mx-auto md:mx-0 w-full">
-                      <p className="text-[9px] font-mono text-white/30 uppercase tracking-[0.4em]">PROBED IDENTIFIER</p>
-                      <p className="text-3xl md:text-4xl font-mono text-white tracking-[0.4em] font-medium">{lastResult.roll_number}</p>
+                   <div className="flex flex-col gap-2 py-4 px-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                      <p className="text-[8px] font-mono text-white/20 uppercase tracking-[0.4em]">SYMBOL ID</p>
+                      <p className="text-2xl font-mono text-white tracking-[0.3em] font-medium">{lastResult.roll_number}</p>
                    </div>
                 </div>
               </motion.div>
@@ -217,39 +213,50 @@ export default function Home() {
 
             {showAlertUI && (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full glass rounded-[40px] p-12 border border-white/5 space-y-10 text-center"
+                className="w-full glass rounded-[36px] p-8 border border-white/5 space-y-6"
               >
-                <div className="flex flex-col items-center space-y-5">
-                   <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-rose to-violet p-px shadow-2xl">
-                      <div className="w-full h-full bg-[#02020a] rounded-3xl flex items-center justify-center">
-                         <Bell className="w-8 h-8 text-rose animate-bounce" />
-                      </div>
-                   </div>
-                   <div className="space-y-2">
-                      <h3 className="font-display text-2xl tracking-[0.2em] text-white uppercase italic">Divine Alert</h3>
-                      <p className="text-white/40 text-[11px] font-mono uppercase tracking-[0.3em] max-w-[400px] leading-relaxed">
-                        This roll number of {roll} hasn&apos;t manifested in our Nexus. Establish a link to be notified?
-                      </p>
-                   </div>
+                <div className="flex flex-col items-center text-center space-y-3">
+                   <Bell className="w-6 h-6 text-rose animate-pulse" />
+                   <h3 className="font-display text-lg tracking-widest text-white uppercase">Divine Alert</h3>
+                   <p className="text-white/40 text-[9px] font-mono uppercase tracking-widest max-w-[300px]">
+                     Not yet witnessed. Enter your details to be notified of your destiny.
+                   </p>
                 </div>
 
-                <div className="flex flex-col items-center gap-6">
+                <div className="space-y-3">
                   <select 
                     value={selectedCollege}
                     onChange={(e) => setSelectedCollege(e.target.value)}
-                    className="w-full max-w-[400px] bg-white/5 border border-white/10 rounded-2xl px-6 py-5 font-mono text-[11px] uppercase tracking-widest text-white/70 outline-none focus:border-rose/50 transition-all appearance-none text-center"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 font-mono text-[9px] uppercase tracking-widest text-white/70 outline-none focus:border-rose/50 appearance-none"
                   >
-                    <option value="" className="bg-[#02020a]">-- Identify your Sanctuary --</option>
+                    <option value="" className="bg-[#02020a]">Select Your Campus</option>
                     {COLLEGES.map(c => <option key={c} value={c} className="bg-[#02020a]">{c}</option>)}
                   </select>
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <input 
+                      type="email" 
+                      placeholder="Email Address"
+                      value={contactInfo.email}
+                      onChange={(e) => setContactInfo({...contactInfo, email: e.target.value})}
+                      className="bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 font-mono text-[9px] text-white outline-none focus:border-rose/50"
+                    />
+                    <input 
+                      type="tel" 
+                      placeholder="WhatsApp No."
+                      value={contactInfo.whatsapp}
+                      onChange={(e) => setContactInfo({...contactInfo, whatsapp: e.target.value})}
+                      className="bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 font-mono text-[9px] text-white outline-none focus:border-rose/50"
+                    />
+                  </div>
+
                   <button 
                     onClick={subscribeAlert}
-                    className="w-full max-w-[400px] bg-white text-black py-5 rounded-2xl font-black text-[11px] tracking-[0.4em] uppercase hover:bg-rose hover:text-white transition-all flex items-center justify-center gap-4 shadow-xl"
+                    className="w-full bg-white text-black py-4 rounded-xl font-black text-[9px] tracking-widest uppercase hover:bg-rose hover:text-white transition-all flex items-center justify-center gap-3"
                   >
-                    ESTABLISH LINK <Activity className="w-4 h-4" />
+                    ESTABLISH LINK <Globe className="w-4 h-4" />
                   </button>
                 </div>
               </motion.div>
@@ -257,7 +264,6 @@ export default function Home() {
           </AnimatePresence>
         </section>
       </div>
-
     </main>
   );
 }
