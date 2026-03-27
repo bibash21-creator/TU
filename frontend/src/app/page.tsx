@@ -1,11 +1,19 @@
-"use client";
-
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogIn, Sparkles, Sun, Moon, ArrowRight, Activity, Terminal, ShieldCheck } from "lucide-react";
+import { LogIn, Sparkles, Sun, Moon, ArrowRight, Activity, Terminal, ShieldCheck, Bell, MapPin, Globe } from "lucide-react";
 import OracleAvatar from "@/components/OracleAvatar";
 import AdminOverlay from "@/components/AdminOverlay";
 import { api } from "@/lib/api";
+import { toast, Toaster } from "sonner";
+
+const COLLEGES = [
+  "Amrit Campus", "Patan Multiple Campus", "Nepal Commerce Campus", 
+  "Padma Kanya Multiple Campus", "Shanker Dev Campus", "Tri-Chandra Multiple Campus",
+  "Bhaktapur Multiple Campus", "Central Department of CSIT", "Kathmandu BernHardt College",
+  "Deerwalk Institute of Technology", "St. Xavier's College", "Texas International College",
+  "National College of Computer Studies", "Prime College", "Orchid International College",
+  "Himalaya College of Engineering", "Kathford International College", "Sagarmatha College of Science and Technology"
+];
 
 export default function Home() {
   const [roll, setRoll] = useState("");
@@ -16,6 +24,8 @@ export default function Home() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [lastResult, setLastResult] = useState<any>(null);
+  const [showAlertUI, setShowAlertUI] = useState(false);
+  const [selectedCollege, setSelectedCollege] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -37,18 +47,24 @@ export default function Home() {
     setIsTyping(true);
     setStatus("Scanning Digital Akashic...");
     setLastResult(null); 
+    setShowAlertUI(false);
     try {
       const data = await api.get(`/query/${encodeURIComponent(roll)}`);
       setIsTyping(false);
-      if (data.status === "error") {
+      if (data.status === "Not Found") {
         setLastResult(null);
+        setStatus("Data Link Absent");
+        speakNova(data.message_en, currentLang);
+        setShowAlertUI(true); // Show the "Subscribe" UI
+      } else if (data.status === "error") {
         setStatus("Query Expired");
-        speakNova(data.message, currentLang);
+        toast.error("Nexus sequence interrupted.");
       } else {
         setLastResult(data);
         const msgText = currentLang === "np" ? data.message_np : data.message_en;
         speakNova(msgText, currentLang);
-        setStatus(data.status === "Not Found" ? "Memory Pointer Null" : "Access Granted ✦");
+        setStatus("Access Granted ✦");
+        toast.success("Destiny revealed.");
       }
     } catch (e: any) {
       setIsTyping(false);
@@ -56,9 +72,23 @@ export default function Home() {
     }
   };
 
+  const subscribeAlert = () => {
+    if (!selectedCollege) {
+      toast.warning("Select your sanctuary (College) first.");
+      return;
+    }
+    toast.success("Destiny Link Established!", {
+      description: `The Oracle will notify you when ${roll} manifests in ${selectedCollege}.`,
+    });
+    setShowAlertUI(false);
+    setStatus("Ethereal Alert: ACTIVE");
+  };
+
   return (
     <main className="relative min-h-screen bg-[var(--bg)] text-[var(--text)] transition-all duration-700 font-body flex flex-col items-center justify-center p-6 md:p-12 overflow-x-hidden">
-      {/* Background Blobs (Premium Design) */}
+      <Toaster position="top-center" richColors theme={theme} />
+      
+      {/* Background Blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="blob w-[500px] h-[500px] bg-rose -top-40 -left-40 animate-[blob-drift_12s_infinite]" />
         <div className="blob w-[600px] h-[600px] bg-violet bottom-0 right-0 opacity-10 animate-[blob-drift_18s_-3s_infinite]" />
@@ -84,12 +114,12 @@ export default function Home() {
 
       <AdminOverlay isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
 
-      {/* Main Grid: Side-by-Side Model and Interface */}
+      {/* Main Grid */}
       <div className="relative z-10 w-full max-w-[1300px] grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 items-center">
         
         {/* Left Aspect: The Oracle Avatar */}
         <section className="flex flex-col items-center justify-center space-y-8 animate-in fade-in slide-in-from-left-8 duration-1000">
-           <div className="relative">
+           <div className="relative scale-110 md:scale-125">
               <div className={`absolute -inset-16 rounded-full blur-[80px] transition-all duration-2000 ${isSpeaking ? "bg-rose opacity-20 scale-110" : "bg-violet opacity-5 shadow-inner"}`} />
               <OracleAvatar isSpeaking={isSpeaking} />
            </div>
@@ -99,16 +129,15 @@ export default function Home() {
            </div>
         </section>
 
-        {/* Right Aspect: Result Search & Discovery */}
+        {/* Right Aspect */}
         <section className="space-y-12 animate-in fade-in slide-in-from-right-8 duration-1000">
           <div className="space-y-4">
-             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight leading-tight">
+             <h1 className="text-4xl md:text-5xl lg:text-7xl font-light tracking-tight leading-tight">
                Witness your <br/>
                <em className="italic bg-gradient-to-r from-rose via-violet to-lavender bg-clip-text text-transparent not-italic font-medium">Academic Destiny.</em>
              </h1>
           </div>
 
-          {/* Search Engine Hub */}
           <div className="space-y-10">
             <div className="relative group w-full">
               <div className="absolute -inset-2 bg-gradient-to-r from-rose via-violet to-lavender rounded-[34px] opacity-10 group-focus-within:opacity-40 transition-opacity blur-3xl" />
@@ -124,7 +153,7 @@ export default function Home() {
                 <button 
                   onClick={askNova}
                   disabled={isTyping}
-                  className="bg-gradient-to-r from-rose to-violet px-10 md:px-14 py-5 rounded-[22px] font-display text-[12px] font-black tracking-widest uppercase hover:shadow-2xl active:scale-95 disabled:opacity-50 transition-all flex items-center gap-3 shadow-[0_10px_30px_rgba(244,63,138,0.2)]"
+                  className="bg-gradient-to-r from-rose to-violet px-10 md:px-14 py-5 rounded-[22px] font-display text-[12px] font-black tracking-widest uppercase hover:shadow-2xl active:scale-95 disabled:opacity-50 transition-all flex items-center gap-3"
                 >
                   {isTyping ? "..." : "Reveal"} <ArrowRight className="w-4 h-4" />
                 </button>
@@ -152,41 +181,79 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Dynamic Result Revelation */}
           <AnimatePresence mode="wait">
             {lastResult && (
               <motion.div 
                 key={lastResult.roll_number}
-                initial={{ opacity: 0, y: 40, scale: 0.98 }}
+                initial={{ opacity: 0, y: 40, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                className={`w-full glass rounded-[54px] p-10 md:p-14 border-t-[3.5px] shadow-[0_45px_100px_rgba(0,0,0,0.3)] ${lastResult.status === "Passed" ? "border-t-emerald-400/50" : "border-t-rose/50"}`}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className={`w-full glass rounded-[54px] p-10 md:p-14 border-t-[4px] shadow-3xl ${lastResult.status === "Passed" ? "border-t-emerald-400" : "border-t-rose"}`}
               >
                 <div className="flex flex-col gap-10">
                    <div className="flex items-center justify-between">
-                     <div className={`px-10 py-3 rounded-full text-[11px] font-black tracking-[0.5em] uppercase shadow-lg ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose/10 text-rose border border-rose/20"}`}>
-                       Result {lastResult.status}
+                     <div className={`px-10 py-3 rounded-full text-[11px] font-black tracking-[0.5em] uppercase ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose/10 text-rose"}`}>
+                       Status: {lastResult.status}
                      </div>
-                     <ShieldCheck className={`w-6 h-6 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"} opacity-30`} />
+                     <ShieldCheck className={`w-8 h-8 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"}`} />
                    </div>
                    
-                   <div className="space-y-5">
+                   <div className="space-y-6">
+                     <p className="font-mono text-[12px] text-rose uppercase tracking-widest flex items-center gap-2">
+                       <MapPin className="w-3 h-3" /> {lastResult.campus}
+                     </p>
                      <h2 className="text-4xl md:text-5xl font-display font-medium tracking-tight text-[var(--text)] uppercase leading-[1.1]">
                        {lastResult.semester}
                      </h2>
                      <div className="flex items-center gap-6">
-                       <span className="h-px bg-[var(--border)] flex-1" />
-                       <p className="font-mono text-[14px] md:text-[15px] uppercase tracking-[0.4em] text-[var(--accent)] font-black">
-                         {lastResult.year}
+                       <span className="h-px bg-white/10 flex-1" />
+                       <p className="font-mono text-[14px] uppercase tracking-[0.4em] text-[var(--accent)] font-black">
+                         {lastResult.year} · {lastResult.faculty}
                        </p>
-                       <span className="h-px bg-[var(--border)] flex-1 opacity-20" />
+                       <span className="h-px bg-white/10 flex-1" />
                      </div>
                    </div>
 
                    <div className="flex flex-col gap-4 border-l-2 border-[var(--border)] pl-10 ml-2">
                       <p className="text-[11px] font-mono text-[var(--sub)] uppercase tracking-widest italic opacity-40">Identity Witnessed</p>
-                      <p className="text-3xl font-mono text-[var(--text)] tracking-[0.4em] font-medium">{lastResult.roll_number}</p>
+                      <p className="text-4xl font-mono text-[var(--text)] tracking-[0.4em] font-medium">{lastResult.roll_number}</p>
                    </div>
+                </div>
+              </motion.div>
+            )}
+
+            {showAlertUI && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full glass rounded-[40px] p-10 border border-white/5 space-y-8"
+              >
+                <div className="flex flex-col items-center text-center space-y-4">
+                   <div className="w-16 h-16 rounded-2xl bg-rose/10 flex items-center justify-center text-rose">
+                      <Bell className="w-8 h-8 animate-bounce" />
+                   </div>
+                   <h3 className="font-display text-xl tracking-widest text-white uppercase">Bind Destiny?</h3>
+                   <p className="text-[var(--sub)] text-[11px] font-mono uppercase tracking-[0.2em] max-w-[300px]">
+                     The Oracle has not witnessed this roll number yet. Would you like to be notified when it manifests?
+                   </p>
+                </div>
+
+                <div className="space-y-4">
+                  <select 
+                    value={selectedCollege}
+                    onChange={(e) => setSelectedCollege(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-mono text-[11px] uppercase tracking-widest text-white/70 outline-none focus:border-rose/50"
+                  >
+                    <option value="" className="bg-[#02020a]">Choose Your Sanctuary (College)</option>
+                    {COLLEGES.map(c => <option key={c} value={c} className="bg-[#02020a]">{c}</option>)}
+                  </select>
+
+                  <button 
+                    onClick={subscribeAlert}
+                    className="w-full bg-white text-black py-5 rounded-2xl font-display text-[11px] font-black tracking-[0.2em] uppercase hover:bg-rose hover:text-white transition-all flex items-center justify-center gap-3"
+                  >
+                    Connect Ethereal Link <Globe className="w-4 h-4" />
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -194,15 +261,14 @@ export default function Home() {
         </section>
       </div>
 
-      {/* Concept Low-Profile Footer */}
       <footer className="fixed bottom-12 flex flex-col items-center gap-5 opacity-30 text-[10px] font-mono tracking-[0.3em] uppercase text-[var(--sub)]">
         <div className="flex items-center gap-10 border-b border-[var(--border)] pb-4">
-           <span>Digital Synthesis ✦ 2.9</span>
+           <span>Digital Synthesis ✦ 3.0</span>
            <Activity className="w-3 h-3 text-rose animate-pulse" />
-           <span>TU Result Grid</span>
+           <span>Providence Grid</span>
         </div>
         <div className="flex items-center gap-3 opacity-60">
-           <Terminal className="w-3 h-3" /> Ethereal Console: Active
+           <Terminal className="w-3 h-3" /> Oracle Link: Established
         </div>
       </footer>
     </main>

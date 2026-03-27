@@ -29,9 +29,10 @@ async def query_result(roll_number: str):
                     "status": "Failed",
                     "year": year_label,
                     "semester": semester,
+                    "campus": campus_data.get("campus", "TU"),
                     "reason": reason,
-                    "message_en": f"I regret to inform you that roll number {roll_spaced} from the {year_label} {semester} of {faculty} has failed or been withheld for {reason}.",
-                    "message_np": f"माफ गर्नुहोस्, रोल नम्बर {roll_number} को {year_label} {semester} {faculty} को नतिजा सफल हुन सकेन वा {reason} को कारणले रोकिएको छ।",
+                    "message_en": f"I regret to inform you that roll number {roll_spaced} from the {year_label} {semester} of {faculty} at {campus_data.get('campus', 'TU')} has failed or been withheld for {reason}.",
+                    "message_np": f"माफ गर्नुहोस्, {campus_data.get('campus', 'TU')} को रोल नम्बर {roll_number} को {year_label} {semester} {faculty} को नतिजा सफल हुन सकेन वा {reason} को कारणले रोकिएको छ।",
                     "message": f"Failed {year_label}: {reason}"
                 }
                 
@@ -41,8 +42,9 @@ async def query_result(roll_number: str):
                 "year": year_label,
                 "semester": semester,
                 "faculty": faculty,
-                "message_en": f"Congratulations. Roll number {roll_spaced} has successfully passed the {year_label} {semester} assessment for {faculty}.",
-                "message_np": f"बधाई छ। रोल नम्बर {roll_number} ले {year_label} को {semester} {faculty} तहको परीक्षामा सफलता प्राप्त गरेको छ।",
+                "campus": campus_data.get("campus", "TU"),
+                "message_en": f"Congratulations. Roll number {roll_spaced} from {campus_data.get('campus', 'TU')} has successfully passed the {year_label} {semester} assessment for {faculty}.",
+                "message_np": f"बधाई छ। {campus_data.get('campus', 'TU')} को रोल नम्बर {roll_number} ले {year_label} को {semester} {faculty} तहको परीक्षामा सफलता प्राप्त गरेको छ।",
                 "message": f"Passed {year_label} {semester}!"
             }
             

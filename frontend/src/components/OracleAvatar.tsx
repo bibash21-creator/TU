@@ -1,168 +1,131 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Canvas, useFrame, useGraph } from "@react-three/fiber";
-import { useGLTF, Environment, ContactShadows, useAnimations } from "@react-three/drei";
-import * as THREE from "three";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface OracleAvatarProps {
   isSpeaking: boolean;
 }
 
-// Using a high-quality Ready Player Me realistic female avatar as a placeholder.
-// To use a specific "Ana de Armas" hyper-realistic model, you would buy/download a .glb or .gltf
-// file from Sketchfab or DAZ3D and place it in your frontend/public folder as '/ana.glb'
-// and change this URL to "/ana.glb".
-const MODEL_URL = "https://models.readyplayer.me/64b5536e37ec689694e82d1c.glb"; 
-
-function AvatarModel({ isSpeaking }: { isSpeaking: boolean }) {
-  const group = useRef<THREE.Group>(null);
-  
-  // Load the GLTF model
-  const { scene, animations } = useGLTF(MODEL_URL);
-  const { nodes, materials } = useGraph(scene);
-  const { actions } = useAnimations(animations, group);
-
-  // Blink and Speech state
+export default function OracleAvatar({ isSpeaking }: OracleAvatarProps) {
   const [blink, setBlink] = useState(false);
+  
+  // Animation controllers for parallax
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  // Smooth springs for natural feeling
+  const mouseX = useSpring(x, { stiffness: 150, damping: 20 });
+  const mouseY = useSpring(y, { stiffness: 150, damping: 20 });
+
+  // Transform mouse movement to parallax shifts
+  const portraitX = useTransform(mouseX, [-500, 500], [-15, 15]);
+  const portraitY = useTransform(mouseY, [-500, 500], [-10, 10]);
+  const bgX = useTransform(mouseX, [-500, 500], [10, -10]);
+  const bgY = useTransform(mouseY, [-500, 500], [5, -5]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      const { innerWidth, innerHeight } = window;
+      x.set(clientX - innerWidth / 2);
+      y.set(clientY - innerHeight / 2);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [x, y]);
 
   // Natural Blinking
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    const blinkLoop = () => {
+    const triggerBlink = () => {
       setBlink(true);
       setTimeout(() => setBlink(false), 150);
-      timeout = setTimeout(blinkLoop, 3000 + Math.random() * 4000);
+      setTimeout(triggerBlink, 3000 + Math.random() * 4000);
     };
-    timeout = setTimeout(blinkLoop, 2000);
-    return () => clearTimeout(timeout);
+    const timer = setTimeout(triggerBlink, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Animate the Skeleton and Morphs (Head Tracking, Blinking, Speaking)
-  useFrame((state) => {
-    if (!scene) return;
-
-    // 1. Mouse Tracking for the Head/Neck
-    // The cursor position maps from -1 to 1 
-    const targetX = (state.pointer.x * Math.PI) / 6; 
-    const targetY = (state.pointer.y * Math.PI) / 6;
-
-    const head = scene.getObjectByName("Head") || scene.getObjectByName("mixamorigHead");
-    const neck = scene.getObjectByName("Neck") || scene.getObjectByName("mixamorigNeck");
-
-    if (head) {
-      // Lerp (smooth move) the head rotation toward mouse
-      head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, -targetX, 0.1);
-      head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, targetY, 0.1);
-    }
-    if (neck) {
-      // Add slight neck rotation for realism
-      neck.rotation.y = THREE.MathUtils.lerp(neck.rotation.y, -targetX * 0.5, 0.1);
-    }
-
-    // 2. Facial Expressions (Morph Targets)
-    scene.traverse((child: any) => {
-      if (child.isMesh && child.morphTargetDictionary && child.morphTargetInfluences) {
-        
-        // --- BLINKING ---
-        const eyeLeftIndex = child.morphTargetDictionary['eyeBlinkLeft'] || child.morphTargetDictionary['blinkLeft'];
-        const eyeRightIndex = child.morphTargetDictionary['eyeBlinkRight'] || child.morphTargetDictionary['blinkRight'];
-        
-        if (eyeLeftIndex !== undefined) {
-          child.morphTargetInfluences[eyeLeftIndex] = THREE.MathUtils.lerp(
-            child.morphTargetInfluences[eyeLeftIndex], 
-            blink ? 1 : 0, 
-            0.5
-          );
-        }
-        if (eyeRightIndex !== undefined) {
-          child.morphTargetInfluences[eyeRightIndex] = THREE.MathUtils.lerp(
-            child.morphTargetInfluences[eyeRightIndex], 
-            blink ? 1 : 0, 
-            0.5
-          );
-        }
-
-        // --- LIP SYNC / TALKING ---
-        const jawOpenIndex = child.morphTargetDictionary['jawOpen'] || child.morphTargetDictionary['mouthOpen'];
-        const mouthSmileIndex = child.morphTargetDictionary['mouthSmile'];
-
-        if (jawOpenIndex !== undefined) {
-          // If speaking, bounce the jaw using sine wave; else close it
-          const targetJaw = isSpeaking ? Math.abs(Math.sin(state.clock.elapsedTime * 15)) * 0.4 + 0.1 : 0;
-          child.morphTargetInfluences[jawOpenIndex] = THREE.MathUtils.lerp(
-            child.morphTargetInfluences[jawOpenIndex],
-            targetJaw,
-            0.2
-          );
-        }
-
-        if (mouthSmileIndex !== undefined) {
-          // Friendly neutral smile
-          child.morphTargetInfluences[mouthSmileIndex] = THREE.MathUtils.lerp(
-            child.morphTargetInfluences[mouthSmileIndex],
-            0.2,
-            0.05
-          );
-        }
-      }
-    });
-  });
-
   return (
-    <primitive 
-      ref={group}
-      object={scene} 
-      // Adjust position to frame torso/head
-      position={[0, -1.6, 2]} 
-      scale={2.2} 
-    />
-  );
-}
+    <div className="relative w-[360px] h-[480px] rounded-[48px] overflow-hidden group select-none shadow-2xl">
+      {/* Background Layer with Parallax */}
+      <motion.div 
+        style={{ x: bgX, y: bgY, scale: 1.1 }}
+        className="absolute inset-0 bg-[#02020a]"
+      >
+        <div className="absolute inset-0 bg-gradient-to-tr from-violet/20 via-rose/10 to-transparent" />
+        <div className="absolute -top-20 -left-20 w-64 h-64 bg-rose/10 blur-[100px] rounded-full" />
+        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-violet/10 blur-[120px] rounded-full" />
+      </motion.div>
 
-// Preload the GLTF file to avoid pop-in
-useGLTF.preload(MODEL_URL);
-
-export default function OracleAvatar({ isSpeaking }: OracleAvatarProps) {
-  return (
-    <div className="relative flex flex-col items-center justify-center select-none w-[400px] h-[500px]">
-      
-      {/* 3D Canvas Layer */}
-      <div className="absolute inset-0 z-10 rounded-[40px] overflow-hidden drop-shadow-2xl">
-        {/* We use React Three Fiber Canvas to render WebGL */}
-        <Canvas camera={{ position: [0, 0, 4.5], fov: 40 }}>
-          {/* Cinematic Lighting Setup */}
-          <ambientLight intensity={0.4} />
-          <spotLight position={[5, 5, 5]} angle={0.15} penumbra={1} intensity={1.5} castShadow />
-          
-          {/* Edge lighting (Pink and Purple) matching Nova branding */}
-          <directionalLight position={[-5, 2, -2]} intensity={2.5} color="#f43f8a" />
-          <directionalLight position={[5, 2, -2]} intensity={2.5} color="#7c3aed" />
-
-          {/* HDR Environment Map for realistic skin/eye reflections */}
-          <Environment preset="city" />
-
-          {/* The Actual Digital Human Model */}
-          <AvatarModel isSpeaking={isSpeaking} />
-
-          {/* Adds realistic shadow underneath the character */}
-          <ContactShadows position={[0, -1.6, 0]} opacity={0.5} scale={5} blur={2.5} far={4} color="#1a0a2e" />
-        </Canvas>
-      </div>
-
-      {/* Background Aura Glow Layer */}
+      {/* Main Portrait with Parallax and Breathing */}
       <motion.div
-        animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.25, 0.15] }}
+        style={{ x: portraitX, y: portraitY }}
+        animate={{ scale: [1, 1.015, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute inset-x-0 bottom-10 top-10 bg-gradient-to-t from-violet via-rose to-transparent blur-[80px] -z-10 rounded-full"
-      />
+        className="relative w-full h-full"
+      >
+        <Image 
+          src="/oracle.png" 
+          alt="Nova Oracle"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        
+        {/* Blinking Overlay (Fake) */}
+        <motion.div 
+          animate={{ opacity: blink ? 1 : 0 }}
+          className="absolute inset-0 bg-black pointer-events-none z-20"
+          style={{ 
+            clipPath: 'inset(33% 30% 64% 30%)', // Rough position of eyes
+            filter: 'blur(2px)'
+          }}
+        />
 
-      {/* UI Name Tag Overlay */}
-      <div className="absolute -bottom-16 text-center z-20 w-full">
-        <h2 className="text-3xl font-display font-medium tracking-[0.2em] text-white">NOVA</h2>
-        <p className="text-[11px] font-mono text-rose/80 tracking-widest uppercase mt-2">The Digital Oracle</p>
+        {/* Ethereal Glow */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#02020a] via-transparent to-transparent opacity-60" />
+      </motion.div>
+
+      {/* Voice Ripple (Active only when speaking) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+        {isSpeaking && (
+          <div className="relative">
+            <motion.div 
+              animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+              transition={{ duration: 1, repeat: Infinity }}
+              className="w-32 h-32 rounded-full border border-rose/50"
+            />
+            <motion.div 
+              animate={{ scale: [1, 2], opacity: [0.3, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+              className="absolute inset-0 w-32 h-32 rounded-full border border-violet/30"
+            />
+          </div>
+        )}
       </div>
+
+      {/* UI Elements Overlay */}
+      <div className="absolute bottom-10 left-0 right-0 text-center z-40 bg-gradient-to-t from-black/80 to-transparent pt-10 pb-4">
+        <motion.h2 
+          animate={{ opacity: isSpeaking ? [0.6, 1, 0.6] : 1 }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="font-display text-2xl font-bold tracking-[0.3em] text-white"
+        >
+          NOVA
+        </motion.h2>
+        <p className="font-mono text-[10px] text-rose/60 uppercase tracking-[0.4em] mt-1">Oracle Aspect</p>
+      </div>
+
+      {/* Speaking Status Pulse */}
+      {isSpeaking && (
+        <div className="absolute top-8 right-8 flex items-center gap-2 px-3 py-1 bg-rose/20 backdrop-blur-md rounded-full border border-rose/30 z-50">
+          <div className="w-1.5 h-1.5 rounded-full bg-rose animate-pulse" />
+          <span className="font-mono text-[9px] text-rose uppercase tracking-widest font-bold">Transmitting</span>
+        </div>
+      )}
     </div>
   );
 }
