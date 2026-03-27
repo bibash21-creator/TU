@@ -10,3 +10,5 @@ Pillow
 python-multipart
 python-dotenv
 gunicorn
+sqlalchemy
+psycopg2-binary

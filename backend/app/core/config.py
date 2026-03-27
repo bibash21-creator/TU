@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # Storage
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     RESULTS_FILE: str = os.path.join(BASE_DIR, "results.toml")
+    DATABASE_URL: str = "sqlite:///./results.db"  # Default to SQLite for local development
 
     # CORS
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"]
