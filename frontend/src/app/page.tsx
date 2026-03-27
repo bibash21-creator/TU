@@ -119,41 +119,46 @@ export default function Home() {
 
       <AdminOverlay isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
 
-      {/* Integrated Workspace */}
-      <div className="relative z-10 w-full max-w-[1200px] flex flex-col items-center gap-16 md:gap-24 animate-in fade-in zoom-in duration-1000">
+      {/* Integrated Workspace: Side-by-Side Flex Layout */}
+      <div className="relative z-10 w-full max-w-[1400px] flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-32 animate-in fade-in zoom-in duration-1000 px-4">
         
-        {/* The Oracle Appearance */}
-        <section className="relative scale-[0.85] md:scale-100 transition-all">
-           <div className={`absolute -inset-20 rounded-full blur-[100px] transition-all duration-[3000ms] ${isSpeaking ? "bg-rose/20 opacity-30 scale-125" : "bg-violet/5 opacity-10"}`} />
+        {/* The Oracle Appearance: Left Side */}
+        <section className="relative scale-[0.9] md:scale-110 lg:scale-125 transition-all">
+           <div className={`absolute -inset-24 rounded-full blur-[120px] transition-all duration-[3000ms] ${isSpeaking ? "bg-rose/30 opacity-40 scale-150 rotate-90" : "bg-violet/10 opacity-10"}`} />
            <OracleAvatar isSpeaking={isSpeaking} />
         </section>
 
-        {/* Unified Search and Insight Section */}
-        <section className="w-full max-w-[700px] space-y-12">
+        {/* Unified Search and Insight Section: Right Side */}
+        <section className="w-full max-w-[650px] space-y-16">
           
-          <div className="space-y-8">
+          <div className="space-y-12">
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-display font-bold tracking-tight text-white leading-tight">
+               Witness your <br/>
+               <em className="bg-gradient-to-r from-rose via-violet to-lavender bg-clip-text text-transparent italic not-italic">Fate.</em>
+            </h2>
+
             <div className="relative group">
-              <div className="absolute -inset-4 bg-gradient-to-r from-rose/20 via-violet/20 to-transparent rounded-[44px] opacity-0 group-focus-within:opacity-100 transition-opacity blur-3xl" />
-              <div className="relative flex glass rounded-[36px] p-2 focus-within:ring-2 focus-within:ring-rose/30 transition-all shadow-3xl border border-white/10">
+              <div className="absolute -inset-6 bg-gradient-to-r from-rose/40 via-violet/40 to-transparent rounded-[50px] opacity-0 group-focus-within:opacity-100 transition-opacity blur-3xl" />
+              <div className="relative flex flex-col md:flex-row glass rounded-[44px] p-4 focus-within:ring-4 focus-within:ring-rose/40 transition-all shadow-[0_50px_100px_rgba(0,0,0,0.5)] border border-white/20">
                 <input 
                   type="text"
                   value={roll}
                   onChange={(e) => setRoll(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && askNova()}
                   placeholder="ENTER SYMBOL ID..."
-                  className="flex-1 bg-transparent px-8 py-5 font-mono text-xl md:text-2xl tracking-[0.4em] outline-none text-white placeholder:text-white/10 uppercase"
+                  className="flex-1 bg-transparent px-10 py-7 font-mono text-2xl md:text-3xl tracking-[0.5em] outline-none text-white placeholder:text-white/20 uppercase"
                 />
                 <button 
                   onClick={askNova}
                   disabled={isTyping}
-                  className="bg-white text-black px-10 md:px-14 py-5 rounded-[28px] font-black text-[12px] tracking-widest uppercase hover:bg-rose hover:text-white active:scale-95 disabled:opacity-50 transition-all flex items-center gap-3 shadow-[0_15px_40px_rgba(255,255,255,0.1)] hover:shadow-rose/30"
+                  className="bg-white text-black px-16 md:px-20 py-7 rounded-[32px] font-black text-[16px] md:text-[18px] tracking-[0.4em] uppercase hover:bg-rose hover:text-white active:scale-90 disabled:opacity-50 transition-all flex items-center justify-center gap-4 shadow-2xl hover:shadow-rose/50"
                 >
-                  {isTyping ? "Scanning..." : "Reveal"} <ArrowRight className="w-4 h-4" />
+                  {isTyping ? "SCANNING" : "REVEAL"} <ArrowRight className="w-6 h-6" />
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center lg:justify-start gap-4">
                 {["en", "np"].map(l => (
                   <button
                     key={l}
