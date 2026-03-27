@@ -47,7 +47,7 @@ export default function OracleAvatar({ isSpeaking }: OracleAvatarProps) {
               transition={{
                 duration: 0.6,
                 repeat: Infinity,
-                repeatType: "alternate",
+                repeatType: "mirror",
                 delay: i * 0.12,
               }}
               className="absolute inset-0 rounded-full border border-lavender/15"
