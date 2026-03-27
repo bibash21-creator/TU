@@ -5,11 +5,10 @@ import { Search, Bell, Info, Shield, Github } from "lucide-react";
 
 interface NavigationProps {
   onAdminClick: () => void;
-  onAlertClick: () => void;
   activeTab: string;
 }
 
-export default function Navigation({ onAdminClick, onAlertClick, activeTab }: NavigationProps) {
+export default function Navigation({ onAdminClick, activeTab }: NavigationProps) {
   return (
     <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
       <motion.div 
@@ -18,7 +17,6 @@ export default function Navigation({ onAdminClick, onAlertClick, activeTab }: Na
         className="glass rounded-full px-6 py-3 border border-white/10 shadow-3xl flex items-center gap-6 md:gap-8"
       >
         <NavButton icon={<Search className="w-4 h-4" />} label="Probe" active={activeTab === "probe"} />
-        <NavButton icon={<Bell className="w-4 h-4" />} label="Alerts" active={activeTab === "alerts"} onClick={onAlertClick} />
         
         <div className="w-px h-4 bg-white/20" />
 
