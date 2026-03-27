@@ -1,223 +1,167 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Canvas, useFrame, useGraph } from "@react-three/fiber";
+import { useGLTF, Environment, ContactShadows, useAnimations } from "@react-three/drei";
+import * as THREE from "three";
+import { motion } from "framer-motion";
 
 interface OracleAvatarProps {
   isSpeaking: boolean;
 }
 
-/**
- * Phoneme-based mouth shapes for realistic speech animation.
- */
-const MOUTH_SHAPES = {
-  idle: "M 148 212 Q 168 218 188 212",
-  speaking_a: "M 144 210 Q 168 238 192 210", // Open Wide
-  speaking_o: "M 152 210 Q 168 232 184 210", // Round
-  speaking_e: "M 144 212 Q 168 225 192 212", // Wide Smile
-  speaking_u: "M 158 210 Q 168 222 178 210", // Pucker
-  speaking_m: "M 150 213 Q 168 215 186 213", // Closed
-};
+// Using a high-quality Ready Player Me realistic female avatar as a placeholder.
+// To use a specific "Ana de Armas" hyper-realistic model, you would buy/download a .glb or .gltf
+// file from Sketchfab or DAZ3D and place it in your frontend/public folder as '/ana.glb'
+// and change this URL to "/ana.glb".
+const MODEL_URL = "https://models.readyplayer.me/64b5536e37ec689694e82d1c.glb"; 
 
-type MouthShape = keyof typeof MOUTH_SHAPES;
+function AvatarModel({ isSpeaking }: { isSpeaking: boolean }) {
+  const group = useRef<THREE.Group>(null);
+  
+  // Load the GLTF model
+  const { scene, animations } = useGLTF(MODEL_URL);
+  const { nodes, materials } = useGraph(scene);
+  const { actions } = useAnimations(animations, group);
 
-export default function OracleAvatar({ isSpeaking }: OracleAvatarProps) {
-  // --- Animation Controllers ---
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  // Smooth springs for natural lag-behind movement (3D effect)
-  const springConfig = { damping: 30, stiffness: 200, mass: 1 };
-  const smoothX = useSpring(mouseX, springConfig);
-  const smoothY = useSpring(mouseY, springConfig);
-
-  // Head Rotations
-  const rotateX = useTransform(smoothY, [-300, 300], [10, -10]);
-  const rotateY = useTransform(smoothX, [-300, 300], [-15, 15]);
-
-  // Feature Shifts (Eyes/Nose/Mouth shift for parallax)
-  const eyeShiftX = useTransform(smoothX, [-500, 500], [-4, 4]);
-  const eyeShiftY = useTransform(smoothY, [-500, 500], [-2, 2]);
-
-  // --- Local States ---
+  // Blink and Speech state
   const [blink, setBlink] = useState(false);
-  const [mouthShape, setMouthShape] = useState<MouthShape>("idle");
-  const [hairPulse, setHairPulse] = useState(0);
-  const mouthCycleRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Track Mouse
+  // Natural Blinking
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      mouseX.set(e.clientX - centerX);
-      mouseY.set(e.clientY - centerY);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
-
-  // Natural Blinking Logic
-  useEffect(() => {
-    const triggerBlink = () => {
+    let timeout: NodeJS.Timeout;
+    const blinkLoop = () => {
       setBlink(true);
-      setTimeout(() => setBlink(false), 120);
-      setTimeout(triggerBlink, 3000 + Math.random() * 4000);
+      setTimeout(() => setBlink(false), 150);
+      timeout = setTimeout(blinkLoop, 3000 + Math.random() * 4000);
     };
-    const timeout = setTimeout(triggerBlink, 2000);
+    timeout = setTimeout(blinkLoop, 2000);
     return () => clearTimeout(timeout);
   }, []);
 
-  // Hair Animation Loop
-  useEffect(() => {
-    const interval = setInterval(() => setHairPulse((p) => p + 0.05), 50);
-    return () => clearInterval(interval);
-  }, []);
+  // Animate the Skeleton and Morphs (Head Tracking, Blinking, Speaking)
+  useFrame((state) => {
+    if (!scene) return;
 
-  // Speech Lip-Sync Logic
-  useEffect(() => {
-    const speechShapes: MouthShape[] = ["speaking_a", "speaking_o", "speaking_e", "speaking_u", "speaking_m"];
-    if (isSpeaking) {
-      let i = 0;
-      mouthCycleRef.current = setInterval(() => {
-        setMouthShape(speechShapes[i % speechShapes.length]);
-        i++;
-      }, 100);
-    } else {
-      if (mouthCycleRef.current) clearInterval(mouthCycleRef.current);
-      setMouthShape("idle");
+    // 1. Mouse Tracking for the Head/Neck
+    // The cursor position maps from -1 to 1 
+    const targetX = (state.pointer.x * Math.PI) / 6; 
+    const targetY = (state.pointer.y * Math.PI) / 6;
+
+    const head = scene.getObjectByName("Head") || scene.getObjectByName("mixamorigHead");
+    const neck = scene.getObjectByName("Neck") || scene.getObjectByName("mixamorigNeck");
+
+    if (head) {
+      // Lerp (smooth move) the head rotation toward mouse
+      head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, -targetX, 0.1);
+      head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, targetY, 0.1);
     }
-  }, [isSpeaking]);
+    if (neck) {
+      // Add slight neck rotation for realism
+      neck.rotation.y = THREE.MathUtils.lerp(neck.rotation.y, -targetX * 0.5, 0.1);
+    }
+
+    // 2. Facial Expressions (Morph Targets)
+    scene.traverse((child: any) => {
+      if (child.isMesh && child.morphTargetDictionary && child.morphTargetInfluences) {
+        
+        // --- BLINKING ---
+        const eyeLeftIndex = child.morphTargetDictionary['eyeBlinkLeft'] || child.morphTargetDictionary['blinkLeft'];
+        const eyeRightIndex = child.morphTargetDictionary['eyeBlinkRight'] || child.morphTargetDictionary['blinkRight'];
+        
+        if (eyeLeftIndex !== undefined) {
+          child.morphTargetInfluences[eyeLeftIndex] = THREE.MathUtils.lerp(
+            child.morphTargetInfluences[eyeLeftIndex], 
+            blink ? 1 : 0, 
+            0.5
+          );
+        }
+        if (eyeRightIndex !== undefined) {
+          child.morphTargetInfluences[eyeRightIndex] = THREE.MathUtils.lerp(
+            child.morphTargetInfluences[eyeRightIndex], 
+            blink ? 1 : 0, 
+            0.5
+          );
+        }
+
+        // --- LIP SYNC / TALKING ---
+        const jawOpenIndex = child.morphTargetDictionary['jawOpen'] || child.morphTargetDictionary['mouthOpen'];
+        const mouthSmileIndex = child.morphTargetDictionary['mouthSmile'];
+
+        if (jawOpenIndex !== undefined) {
+          // If speaking, bounce the jaw using sine wave; else close it
+          const targetJaw = isSpeaking ? Math.abs(Math.sin(state.clock.elapsedTime * 15)) * 0.4 + 0.1 : 0;
+          child.morphTargetInfluences[jawOpenIndex] = THREE.MathUtils.lerp(
+            child.morphTargetInfluences[jawOpenIndex],
+            targetJaw,
+            0.2
+          );
+        }
+
+        if (mouthSmileIndex !== undefined) {
+          // Friendly neutral smile
+          child.morphTargetInfluences[mouthSmileIndex] = THREE.MathUtils.lerp(
+            child.morphTargetInfluences[mouthSmileIndex],
+            0.2,
+            0.05
+          );
+        }
+      }
+    });
+  });
 
   return (
-    <div className="relative flex flex-col items-center justify-center select-none" style={{ perspective: "1000px" }}>
+    <primitive 
+      ref={group}
+      object={scene} 
+      // Adjust position to frame torso/head
+      position={[0, -1.6, 2]} 
+      scale={2.2} 
+    />
+  );
+}
 
-      {/* 3D Container */}
+// Preload the GLTF file to avoid pop-in
+useGLTF.preload(MODEL_URL);
+
+export default function OracleAvatar({ isSpeaking }: OracleAvatarProps) {
+  return (
+    <div className="relative flex flex-col items-center justify-center select-none w-[400px] h-[500px]">
+      
+      {/* 3D Canvas Layer */}
+      <div className="absolute inset-0 z-10 rounded-[40px] overflow-hidden drop-shadow-2xl">
+        {/* We use React Three Fiber Canvas to render WebGL */}
+        <Canvas camera={{ position: [0, 0, 4.5], fov: 40 }}>
+          {/* Cinematic Lighting Setup */}
+          <ambientLight intensity={0.4} />
+          <spotLight position={[5, 5, 5]} angle={0.15} penumbra={1} intensity={1.5} castShadow />
+          
+          {/* Edge lighting (Pink and Purple) matching Nova branding */}
+          <directionalLight position={[-5, 2, -2]} intensity={2.5} color="#f43f8a" />
+          <directionalLight position={[5, 2, -2]} intensity={2.5} color="#7c3aed" />
+
+          {/* HDR Environment Map for realistic skin/eye reflections */}
+          <Environment preset="city" />
+
+          {/* The Actual Digital Human Model */}
+          <AvatarModel isSpeaking={isSpeaking} />
+
+          {/* Adds realistic shadow underneath the character */}
+          <ContactShadows position={[0, -1.6, 0]} opacity={0.5} scale={5} blur={2.5} far={4} color="#1a0a2e" />
+        </Canvas>
+      </div>
+
+      {/* Background Aura Glow Layer */}
       <motion.div
-        style={{
-          rotateX,
-          rotateY,
-          width: 380,
-          height: 500,
-          transformStyle: "preserve-3d",
-        }}
-        className="relative"
-      >
-        {/* Background Aura */}
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
-          transition={{ duration: 4, repeat: Infinity }}
-          className="absolute inset-0 bg-gradient-radial from-rose/30 to-transparent blur-[80px] -z-10"
-        />
+        animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.25, 0.15] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute inset-x-0 bottom-10 top-10 bg-gradient-to-t from-violet via-rose to-transparent blur-[80px] -z-10 rounded-full"
+      />
 
-        <svg viewBox="0 0 336 460" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full filter drop-shadow-2xl">
-          <defs>
-            {/* Premium Skin Textures */}
-            <radialGradient id="skinBase" cx="50%" cy="38%" r="60%">
-              <stop offset="0%" stopColor="#F8D4B4" />
-              <stop offset="70%" stopColor="#E59E7A" />
-              <stop offset="100%" stopColor="#C67C52" />
-            </radialGradient>
-
-            {/* Luscious Ana-Inspired Brunette Hair */}
-            <linearGradient id="hairFlow" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#2D1B14" />
-              <stop offset="50%" stopColor="#3E261B" />
-              <stop offset="100%" stopColor="#1A0F0A" />
-            </linearGradient>
-
-            <linearGradient id="lipTint" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#D96E8A" />
-              <stop offset="100%" stopColor="#B03E5C" />
-            </linearGradient>
-
-            {/* Hazel Eye Depth */}
-            <radialGradient id="hazelEye" cx="45%" cy="40%" r="50%">
-              <stop offset="0%" stopColor="#8EAD67" />
-              <stop offset="60%" stopColor="#5F7D3E" />
-              <stop offset="100%" stopColor="#2D3B1C" />
-            </radialGradient>
-          </defs>
-
-          {/* ── BACK HAIR (Depth) ── */}
-          <motion.path
-            d="M 60 180 Q 40 300 80 440"
-            stroke="url(#hairFlow)" strokeWidth="45" strokeLinecap="round"
-            style={{ x: useTransform(smoothX, [-500, 500], [5, -5]) }}
-          />
-          <motion.path
-            d="M 276 180 Q 296 300 256 440"
-            stroke="url(#hairFlow)" strokeWidth="45" strokeLinecap="round"
-            style={{ x: useTransform(smoothX, [-500, 500], [-5, 5]) }}
-          />
-
-          {/* ── FACE BASE ── */}
-          <ellipse cx="168" cy="185" rx="88" ry="105" fill="url(#skinBase)" />
-
-          {/* ── EYES (Follow Cursor) ── */}
-          <motion.g style={{ x: eyeShiftX, y: eyeShiftY }}>
-            {/* Eyes White */}
-            <ellipse cx="135" cy="165" rx="20" ry={blink ? 1 : 12} fill="white" />
-            <ellipse cx="201" cy="165" rx="20" ry={blink ? 1 : 12} fill="white" />
-
-            {!blink && (
-              <>
-                {/* Irises */}
-                <circle cx="135" cy="165" r="11" fill="url(#hazelEye)" />
-                <circle cx="201" cy="165" r="11" fill="url(#hazelEye)" />
-                {/* Pupils */}
-                <circle cx="135" cy="165" r="5" fill="#1A1A1A" />
-                <circle cx="201" cy="165" r="5" fill="#1A1A1A" />
-                {/* High-End Reflections */}
-                <circle cx="131" cy="162" r="3" fill="white" fillOpacity="0.8" />
-                <circle cx="197" cy="162" r="3" fill="white" fillOpacity="0.8" />
-              </>
-            )}
-          </motion.g>
-
-          {/* ── EYEBROWS (Expressive) ── */}
-          <motion.path
-            d="M 115 145 Q 135 138 153 145"
-            stroke="#3E261B" strokeWidth="4" strokeLinecap="round"
-            animate={{ y: isSpeaking ? -2 : 0 }}
-          />
-          <motion.path
-            d="M 183 145 Q 201 138 221 145"
-            stroke="#3E261B" strokeWidth="4" strokeLinecap="round"
-            animate={{ y: isSpeaking ? -2 : 0 }}
-          />
-
-          {/* ── NOSE ── */}
-          <path d="M 168 180 Q 163 205 158 208 Q 168 212 178 208 Q 173 205 168 180" fill="#B07A54" fillOpacity="0.3" />
-
-          {/* ── MOUTH (Talking) ── */}
-          <motion.path
-            d="M 148 225 Q 168 228 188 225" // Shadow under mouth
-            stroke="#8C4D33" strokeOpacity="0.1" strokeWidth="3" fill="none"
-          />
-          <motion.path
-            d={MOUTH_SHAPES[mouthShape]}
-            stroke="url(#lipTint)"
-            strokeWidth="5"
-            strokeLinecap="round"
-            fill="none"
-            animate={{ d: MOUTH_SHAPES[mouthShape] }}
-            transition={{ type: "spring", damping: 10, stiffness: 200 }}
-          />
-
-          {/* ── FRONT HAIR (Framing) ── */}
-          <motion.g style={{ y: Math.sin(hairPulse) * 2 }}>
-            <path d="M 82 140 Q 90 90 168 85 Q 246 90 254 140" fill="url(#hairFlow)" />
-            <path d="M 82 140 Q 55 200 65 280" stroke="url(#hairFlow)" strokeWidth="35" strokeLinecap="round" fill="none" />
-            <path d="M 254 140 Q 281 200 271 280" stroke="url(#hairFlow)" strokeWidth="35" strokeLinecap="round" fill="none" />
-          </motion.g>
-        </svg>
-      </motion.div>
-
-      {/* Identity Label */}
-      <div className="mt-8 text-center">
+      {/* UI Name Tag Overlay */}
+      <div className="absolute -bottom-16 text-center z-20 w-full">
         <h2 className="text-3xl font-display font-medium tracking-[0.2em] text-white">NOVA</h2>
-        <p className="text-sm font-mono text-rose/60 tracking-widest uppercase mt-2">The Oracle Aspect</p>
+        <p className="text-[11px] font-mono text-rose/80 tracking-widest uppercase mt-2">The Digital Oracle</p>
       </div>
     </div>
   );
