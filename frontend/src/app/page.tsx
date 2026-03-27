@@ -218,45 +218,47 @@ export default function Home() {
                 className="w-full glass rounded-[36px] p-8 border border-white/5 space-y-6"
               >
                 <div className="flex flex-col items-center text-center space-y-3">
-                   <Bell className="w-6 h-6 text-rose animate-pulse" />
-                   <h3 className="font-display text-lg tracking-widest text-white uppercase">Divine Alert</h3>
-                   <p className="text-white/40 text-[9px] font-mono uppercase tracking-widest max-w-[300px]">
-                     Not yet witnessed. Enter your details to be notified of your destiny.
+                   <div className="flex items-center justify-center p-3 bg-rose/10 rounded-full mb-1">
+                     <Bell className="w-5 h-5 text-rose animate-pulse" />
+                   </div>
+                   <h3 className="font-display text-xl tracking-widest text-white uppercase font-bold">Free Result Alerts</h3>
+                   <p className="text-white/50 text-[10px] font-mono uppercase tracking-widest max-w-[320px] leading-relaxed">
+                     Your result is not yet available. Subscribe for free to get an instant <span className="text-emerald-400 font-bold">Pass/Fail</span> notification via WhatsApp or Email the moment it activates.
                    </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4 pt-2">
                   <select 
                     value={selectedCollege}
                     onChange={(e) => setSelectedCollege(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 font-mono text-[9px] uppercase tracking-widest text-white/70 outline-none focus:border-rose/50 appearance-none"
+                    className="w-full bg-[#050510] border border-white/10 rounded-xl px-5 py-4 font-mono text-[10px] uppercase tracking-widest text-white/80 outline-none focus:border-rose/50 transition-all appearance-none"
                   >
-                    <option value="" className="bg-[#02020a]">Select Your Campus</option>
-                    {COLLEGES.map(c => <option key={c} value={c} className="bg-[#02020a]">{c}</option>)}
+                    <option value="">Select Your Campus</option>
+                    {COLLEGES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col md:flex-row gap-3">
                     <input 
                       type="email" 
                       placeholder="Email Address"
                       value={contactInfo.email}
                       onChange={(e) => setContactInfo({...contactInfo, email: e.target.value})}
-                      className="bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 font-mono text-[9px] text-white outline-none focus:border-rose/50"
+                      className="flex-1 bg-[#050510] border border-white/10 rounded-xl px-4 py-4 font-mono text-[10px] text-white outline-none focus:border-rose/50 transition-all placeholder:text-white/30"
                     />
                     <input 
                       type="tel" 
-                      placeholder="WhatsApp No."
+                      placeholder="WhatsApp Number"
                       value={contactInfo.whatsapp}
                       onChange={(e) => setContactInfo({...contactInfo, whatsapp: e.target.value})}
-                      className="bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 font-mono text-[9px] text-white outline-none focus:border-rose/50"
+                      className="flex-1 bg-[#050510] border border-white/10 rounded-xl px-4 py-4 font-mono text-[10px] text-white outline-none focus:border-emerald-400/50 transition-all placeholder:text-white/30"
                     />
                   </div>
 
                   <button 
                     onClick={subscribeAlert}
-                    className="w-full bg-white text-black py-4 rounded-xl font-black text-[9px] tracking-widest uppercase hover:bg-rose hover:text-white transition-all flex items-center justify-center gap-3"
+                    className="w-full bg-gradient-to-r from-rose to-violet text-white py-4 rounded-xl font-black text-[10px] tracking-widest uppercase hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-lg"
                   >
-                    ESTABLISH LINK <Globe className="w-4 h-4" />
+                    Subscribe Now (Free) <Globe className="w-4 h-4" />
                   </button>
                 </div>
               </motion.div>

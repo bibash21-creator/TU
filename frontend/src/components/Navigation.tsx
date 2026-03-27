@@ -10,21 +10,21 @@ interface NavigationProps {
 
 export default function Navigation({ onAdminClick, activeTab }: NavigationProps) {
   return (
-    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50">
+    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
       <motion.div 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="glass rounded-[32px] px-8 py-4 border border-white/5 shadow-3xl flex items-center gap-12"
+        className="glass rounded-full px-6 py-3 border border-white/10 shadow-3xl flex items-center gap-6 md:gap-8"
       >
-        <NavButton icon={<Search className="w-5 h-5" />} label="Probe" active={activeTab === "probe"} />
-        <NavButton icon={<Bell className="w-5 h-5" />} label="Alerts" active={activeTab === "alerts"} />
+        <NavButton icon={<Search className="w-4 h-4" />} label="Probe" active={activeTab === "probe"} />
+        <NavButton icon={<Bell className="w-4 h-4" />} label="Alerts" active={activeTab === "alerts"} />
         
-        <div className="w-px h-6 bg-white/10" />
+        <div className="w-px h-4 bg-white/20" />
 
-        <NavButton icon={<Shield className="w-5 h-5" />} label="System" onClick={onAdminClick} />
-        <a href="https://github.com/bibash21-creator/Result-Query-Tool" target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1.5 text-white/40 hover:text-white transition-all">
-           <Github className="w-5 h-5" />
-           <span className="text-[8px] font-mono uppercase tracking-widest">Git</span>
+        <NavButton icon={<Shield className="w-4 h-4" />} label="System" onClick={onAdminClick} />
+        <a href="https://github.com/bibash21-creator/Result-Query-Tool" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-white/50 hover:text-white transition-all">
+           <Github className="w-4 h-4" />
+           <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Git</span>
         </a>
       </motion.div>
     </nav>
@@ -35,16 +35,16 @@ function NavButton({ icon, label, active, onClick }: { icon: React.ReactNode, la
   return (
     <button 
       onClick={onClick}
-      className={`flex flex-col items-center gap-1.5 transition-all group ${active ? "text-rose scale-110" : "text-white/40 hover:text-white"}`}
+      className={`relative flex items-center gap-2 transition-all ${active ? "text-rose" : "text-white/50 hover:text-white"}`}
     >
-      <div className={`${active ? "shadow-[0_0_15px_#f43f8a]" : ""}`}>
+      <div className={`${active ? "drop-shadow-[0_0_8px_#f43f8a]" : ""}`}>
         {icon}
       </div>
-      <span className="text-[8px] font-mono uppercase tracking-widest font-black opacity-0 group-hover:opacity-100 transition-opacity">
+      <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
         {label}
       </span>
       {active && (
-        <motion.div layoutId="nav-dot" className="w-1 h-1 rounded-full bg-rose mt-1" />
+        <motion.div layoutId="nav-dot" className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-rose" />
       )}
     </button>
   );
