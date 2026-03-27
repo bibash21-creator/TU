@@ -21,7 +21,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./results.db"  # Default to SQLite for local development
 
     # CORS
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"]
+    ALLOWED_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "https://result-query-tool.vercel.app"
+    ]
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
