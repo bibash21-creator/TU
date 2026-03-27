@@ -40,7 +40,12 @@ async def query_result(roll_number: str):
             
             return response
             
-    return {"status": "Not Found", "roll_number": roll_number, "message_en": "Not witnessed yet."}
+    return {
+        "status": "Not Found", 
+        "roll_number": roll_number, 
+        "message_en": f"I am sorry. Roll number {roll_spaced} has not been witnessed by the Oracle yet.",
+        "message_np": f"क्षमा गर्नुहोस्। रोल नम्बर {roll_number} को नतिजा अहिलेसम्म प्राप्त भएको छैन।"
+    }
 
 @router.post("/subscribe")
 async def subscribe(req: SubscriptionRequest):

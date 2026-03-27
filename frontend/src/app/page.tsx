@@ -9,10 +9,17 @@ import { api } from "@/lib/api";
 import { toast, Toaster } from "sonner";
 import Navigation from "@/components/Navigation";
 
-const NovaLogo = () => (
-  <div className="relative w-10 h-10 flex items-center justify-center transform hover:rotate-[15deg] transition-all duration-700">
-    <div className="absolute inset-0 bg-gradient-to-tr from-rose via-violet to-rose rounded-xl rotate-45 animate-pulse opacity-20 blur-sm" />
-    <div className="absolute inset-0 border-2 border-[var(--text)]/20 rounded-xl rotate-12" />
+const NovaLogo = ({ isSpeaking }: { isSpeaking: boolean }) => (
+  <div className="relative w-10 h-10 flex items-center justify-center transform transition-all duration-700">
+    <motion.div 
+      animate={isSpeaking ? { scale: [1, 1.2, 1], rotate: [45, 135, 45], opacity: [0.2, 0.5, 0.2] } : {}}
+      transition={{ duration: 0.5, repeat: Infinity }}
+      className="absolute inset-0 bg-gradient-to-tr from-rose via-violet to-rose rounded-xl rotate-45 blur-sm" 
+    />
+    <motion.div 
+      animate={isSpeaking ? { scale: [1, 1.1, 1] } : {}}
+      className="absolute inset-0 border-2 border-[var(--text)]/20 rounded-xl rotate-12" 
+    />
     <svg viewBox="0 0 24 24" className="w-6 h-6 z-10 fill-none stroke-[var(--text)]" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6l2.1-2.1" className="opacity-40" />
       <circle cx="12" cy="12" r="3" className="fill-[var(--accent)] stroke-none" />
@@ -36,13 +43,30 @@ export default function Home() {
   }, [theme]);
 
   const speakNova = async (text: string, lang = "en") => {
-    if (audioRef.current) audioRef.current.pause();
-    const url = api.getVoiceUrl(text, lang);
-    const audio = new Audio(url);
-    audioRef.current = audio;
-    audio.onplay = () => setIsSpeaking(true);
-    audio.onended = () => setIsSpeaking(false);
-    audio.play();
+    if (!text) return;
+    try {
+      if (audioRef.current) audioRef.current.pause();
+      const url = api.getVoiceUrl(text, lang);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsSpeaking(true);
+            audio.onended = () => setIsSpeaking(false);
+          })
+          .catch(error => {
+            console.error("Speech playback blocked or failed:", error);
+            setIsSpeaking(false);
+            toast.error("Vocal transmission dampened by the void.");
+          });
+      }
+    } catch (e) {
+      console.error("Voice engine fault:", e);
+      setIsSpeaking(false);
+    }
   };
 
   const askNova = async () => {
@@ -52,15 +76,17 @@ export default function Home() {
     try {
       const data = await api.get(`/query/${encodeURIComponent(roll)}`);
       setIsTyping(false);
+      
       if (data.status === "Not Found") {
         setLastResult(null);
-        speakNova(data.message_en, currentLang);
+        const failText = currentLang === "np" ? (data.message_np || "नतिजा फेला परेन।") : (data.message_en || "Result not found.");
+        speakNova(failText, currentLang);
         toast.info("Roll number not yet witnessed by the Oracle.");
       } else if (data.status === "error") {
         toast.error("Nexus sequence interrupted.");
       } else {
         setLastResult(data);
-        const msgText = currentLang === "np" ? data.message_np : data.message_en;
+        const msgText = currentLang === "np" ? (data.message_np || "सफलता प्राप्त भएको छ।") : (data.message_en || "Success.");
         speakNova(msgText, currentLang);
         toast.success("Destiny Revealed ✨");
       }
@@ -84,7 +110,7 @@ export default function Home() {
       {/* Brand Identity */}
       <header className="fixed top-6 left-6 md:left-10 z-50">
         <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.location.reload()}>
-           <NovaLogo />
+           <NovaLogo isSpeaking={isSpeaking} />
            <div className="text-left hidden sm:block">
               <h1 className="text-[12px] font-black tracking-[0.5em] uppercase text-[var(--text)] leading-none mb-1">NOVA ORACLE</h1>
               <div className="flex items-center gap-2">
