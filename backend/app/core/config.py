@@ -24,13 +24,7 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        "https://result-query-tool.vercel.app",
-        "https://tu-.vercel.app",
-        "https://tu-ashen.vercel.app"
+        "https://turesult.vercel.app/"
     ]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
