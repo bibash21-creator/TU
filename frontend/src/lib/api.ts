@@ -3,17 +3,19 @@
  * Centralized fetch logic with environment awareness
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9099";
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:9099").replace(/\/$/, "");
 
 export const api = {
   async get(endpoint: string) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`);
     if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
     return response.json();
   },
 
   async post(endpoint: string, data: any) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -23,9 +25,10 @@ export const api = {
   },
 
   async upload(endpoint: string, file: File) {
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
       method: "POST",
       body: formData,
     });
@@ -34,6 +37,7 @@ export const api = {
   },
 
   getVoiceUrl(text: string, lang: string = "en") {
-    return `${API_BASE_URL}/voice?text=${encodeURIComponent(text)}&lang=${lang}`;
+    const endpoint = `/voice?text=${encodeURIComponent(text)}&lang=${lang}`;
+    return `${API_BASE_URL}${endpoint}`;
   }
 };

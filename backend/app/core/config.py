@@ -29,20 +29,29 @@ class Settings(BaseSettings):
         "http://localhost:3001",
         "http://127.0.0.1:3001",
         "https://result-query-tool.vercel.app",
-        "https://tu-.vercel.app"
+        "https://tu-.vercel.app",
+        "https://tu-ashen.vercel.app"
     ]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: any) -> list[str]:
+        origins = []
         if isinstance(v, str):
             if v.startswith("[") and v.endswith("]"):
                 try:
-                    return json.loads(v)
+                    origins = json.loads(v)
                 except json.JSONDecodeError:
-                    pass
-            return [i.strip() for i in v.split(",")]
-        return v
+                    origins = [i.strip() for i in v.split(",")]
+            else:
+                origins = [i.strip() for i in v.split(",")]
+        elif isinstance(v, list):
+            origins = v
+        else:
+            return v
+        
+        # Permanent Fix: Normalize all origins (remove trailing slashes)
+        return [o.rstrip("/") for o in origins]
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
