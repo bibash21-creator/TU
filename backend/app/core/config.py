@@ -1,4 +1,6 @@
 import os
+import json
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -29,7 +31,25 @@ class Settings(BaseSettings):
         "https://result-query-tool.vercel.app"
     ]
 
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: any) -> list[str]:
+        if isinstance(v, str):
+            if v.startswith("[") and v.endswith("]"):
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    pass
+            return [i.strip() for i in v.split(",")]
+        return v
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-# Global Settings Instance
-settings = Settings()
+# Global Settings Instance with Error Handling
+try:
+    settings = Settings()
+except Exception as e:
+    print(f"✧ Oracle Nexus Configuration Error: {e}")
+    # In a real validation error, Pydantic would crash the app.
+    # We catch it here to ensure the log is actually visible in Render.
+    raise e

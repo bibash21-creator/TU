@@ -30,8 +30,13 @@ class SubscriptionTable(Base):
     email = Column(String, nullable=True)
     whatsapp = Column(String, nullable=True)
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Create tables with resilient error handling
+try:
+    Base.metadata.create_all(bind=engine)
+    print("✦ Database Oracle initialized successfully.")
+except Exception as e:
+    print(f"✧ Database Nexus Error: {e}")
+    # We don't raise here so the app can at least start and show logs
 
 def load_results():
     db = SessionLocal()

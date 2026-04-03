@@ -4,6 +4,7 @@ from app.routers import auth, results, upload, voice
 from app.core.config import settings
 import uvicorn
 
+print("✦ Oracle Nexus initiating startup sequence...")
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
