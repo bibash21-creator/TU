@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
 
     # Security
-    ADMIN_USER: str = "admin"
-    ADMIN_PASS: str = "REDACTED"
-    ADMIN_TOKEN: str = "REDACTED"
-    SECRET_KEY: str = "REDACTED"
+    ADMIN_USER: str
+    ADMIN_PASS: str
+    ADMIN_TOKEN: str
+    SECRET_KEY: str
 
     # Storage
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
