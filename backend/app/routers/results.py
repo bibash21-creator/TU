@@ -1,5 +1,7 @@
+from fastapi import APIRouter, HTTPException, Header
 from app.schemas.result import ResultEntry, SubscriptionRequest
 from app.utils.storage import load_results, save_results, subscribe_user
+from app.core.config import settings
 
 router = APIRouter(tags=["results"])
 
