@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Sun, Moon, ArrowRight, ShieldCheck, MapPin } from "lucide-react";
 import OracleAvatar from "@/components/OracleAvatar";
@@ -8,6 +8,9 @@ import AdminOverlay from "@/components/AdminOverlay";
 import { api } from "@/lib/api";
 import { toast, Toaster } from "sonner";
 import Navigation from "@/components/Navigation";
+
+// Lazy load AvatarAnnouncer for performance
+const AvatarAnnouncer = lazy(() => import("@/components/AvatarAnnouncer"));
 
 const NovaLogo = ({ isSpeaking }: { isSpeaking: boolean }) => (
   <div className="relative w-10 h-10 flex items-center justify-center transform transition-all duration-700">
@@ -36,6 +39,7 @@ export default function Home() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [lastResult, setLastResult] = useState<any>(null);
+  const [showAnnouncer, setShowAnnouncer] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -86,6 +90,7 @@ export default function Home() {
         toast.error("Nexus sequence interrupted.");
       } else {
         setLastResult(data);
+        setShowAnnouncer(true); // Show AI avatar announcer
         const msgText = currentLang === "np" ? (data.message_np || "सफलता प्राप्त भएको छ।") : (data.message_en || "Success.");
         speakNova(msgText, currentLang);
         toast.success("Destiny Revealed ✨");
@@ -196,36 +201,68 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full"
+                className="w-full space-y-6"
               >
-                  <motion.div 
-                    layoutId="result-card"
-                    className={`glass rounded-[32px] md:rounded-[44px] p-6 md:p-8 border-t-[3px] shadow-[0_10px_40px_rgba(0,0,0,0.1)] ${lastResult.status === "Passed" ? "border-t-emerald-400" : "border-t-rose"}`}
-                  >
-                    <div className="flex flex-col gap-6">
-                      <div className="flex items-center justify-between">
-                        <span className={`px-4 py-1 rounded-full text-[8.5px] font-black tracking-[0.4em] uppercase ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose/10 text-rose"}`}>
-                          Status: {lastResult.status}
-                        </span>
-                        <ShieldCheck className={`w-5 h-5 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"} opacity-40`} />
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-rose/60">
-                            <MapPin className="w-3.5 h-3.5" />
-                            <span className="font-mono text-[10px] uppercase tracking-widest font-bold">{lastResult.campus}</span>
+                {/* AI Avatar Announcer */}
+                <AnimatePresence>
+                  {showAnnouncer && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                    >
+                      <Suspense fallback={
+                        <div className="h-80 flex items-center justify-center">
+                          <div className="animate-pulse text-white/40">Loading AI Announcer...</div>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-display font-medium tracking-tight text-[var(--text)] uppercase italic">
-                          {lastResult.semester}
-                        </h2>
-                      </div>
+                      }>
+                        <AvatarAnnouncer
+                          studentData={{
+                            roll_number: lastResult.roll_number,
+                            status: lastResult.status,
+                            campus: lastResult.campus,
+                            semester: lastResult.semester,
+                            faculty: lastResult.faculty,
+                            year: lastResult.year,
+                            reason: lastResult.reason,
+                          }}
+                          autoPlay={true}
+                          onComplete={() => console.log("Announcement complete")}
+                        />
+                      </Suspense>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                      <div className="flex flex-col gap-2 py-4 px-6 bg-[var(--text)]/5 rounded-2xl border border-[var(--text)]/10">
-                          <p className="text-[8px] font-mono text-[var(--sub)] uppercase tracking-[0.4em]">SYMBOL ID</p>
-                          <p className="text-xl md:text-2xl font-mono text-[var(--text)] tracking-[0.3em] font-medium">{lastResult.roll_number}</p>
-                      </div>
+                {/* Result Card */}
+                <motion.div 
+                  layoutId="result-card"
+                  className={`glass rounded-[32px] md:rounded-[44px] p-6 md:p-8 border-t-[3px] shadow-[0_10px_40px_rgba(0,0,0,0.1)] ${lastResult.status === "Passed" ? "border-t-emerald-400" : "border-t-rose"}`}
+                >
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                      <span className={`px-4 py-1 rounded-full text-[8.5px] font-black tracking-[0.4em] uppercase ${lastResult.status === "Passed" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose/10 text-rose"}`}>
+                        Status: {lastResult.status}
+                      </span>
+                      <ShieldCheck className={`w-5 h-5 ${lastResult.status === "Passed" ? "text-emerald-400" : "text-rose"} opacity-40`} />
                     </div>
-                  </motion.div>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-rose/60">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span className="font-mono text-[10px] uppercase tracking-widest font-bold">{lastResult.campus}</span>
+                      </div>
+                      <h2 className="text-2xl md:text-4xl font-display font-medium tracking-tight text-[var(--text)] uppercase italic">
+                        {lastResult.semester}
+                      </h2>
+                    </div>
+
+                    <div className="flex flex-col gap-2 py-4 px-6 bg-[var(--text)]/5 rounded-2xl border border-[var(--text)]/10">
+                        <p className="text-[8px] font-mono text-[var(--sub)] uppercase tracking-[0.4em]">SYMBOL ID</p>
+                        <p className="text-xl md:text-2xl font-mono text-[var(--text)] tracking-[0.3em] font-medium">{lastResult.roll_number}</p>
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
