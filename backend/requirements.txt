@@ -12,3 +12,5 @@ python-dotenv
 gunicorn
 sqlalchemy
 psycopg2-binary
+slowapi
+python-magic
