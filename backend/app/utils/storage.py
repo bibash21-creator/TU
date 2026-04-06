@@ -3,11 +3,16 @@ from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
+from filelock import FileLock
+import threading
 
 # Database setup
-engine = create_engine(settings.DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# Thread-safe lock for database operations
+_db_lock = threading.Lock()
 
 # SQLAlchemy Models
 class ResultTable(Base):
@@ -59,24 +64,30 @@ def load_results():
         db.close()
 
 def save_results(results):
-    db = SessionLocal()
-    try:
-        db.query(ResultTable).delete()
-        for r in results:
-            new_entry = ResultTable(
-                campus=r.get("campus", "TU"),
-                semester=r.get("semester"),
-                faculty=r.get("faculty"),
-                year=r.get("year"),
-                status=r.get("status", "Passed"),
-                reason=r.get("reason"),
-                roll_numbers_json=json.dumps(r.get("roll_numbers", [])),
-                details_json=json.dumps(r.get("details", {}))
-            )
-            db.add(new_entry)
-        db.commit()
-    finally:
-        db.close()
+    # Use thread lock to prevent race conditions
+    with _db_lock:
+        db = SessionLocal()
+        try:
+            # Use transaction for atomic operation
+            db.query(ResultTable).delete()
+            for r in results:
+                new_entry = ResultTable(
+                    campus=r.get("campus", "TU"),
+                    semester=r.get("semester"),
+                    faculty=r.get("faculty"),
+                    year=r.get("year"),
+                    status=r.get("status", "Passed"),
+                    reason=r.get("reason"),
+                    roll_numbers_json=json.dumps(r.get("roll_numbers", [])),
+                    details_json=json.dumps(r.get("details", {}))
+                )
+                db.add(new_entry)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise e
+        finally:
+            db.close()
 
 def subscribe_user(roll_number, campus, email=None, whatsapp=None):
     db = SessionLocal()

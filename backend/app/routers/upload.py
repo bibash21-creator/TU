@@ -11,6 +11,8 @@ router = APIRouter(tags=["upload"])
 
 # Security constants
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_PAGES = 100  # Max PDF pages
+MAX_IMAGE_SIZE = (5000, 5000)  # Max image dimensions
 ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 ALLOWED_MIME_TYPES = {"application/pdf", "image/png", "image/jpeg"}
 
@@ -38,7 +40,20 @@ def validate_file(file: UploadFile, contents: bytes):
 @router.post("/upload-result")
 async def upload_result(file: UploadFile = File(...)):
     filename = file.filename.lower()
-    contents = await file.read()
+    
+    # Stream read with chunking to prevent memory exhaustion
+    contents = b""
+    chunk_size = 1024 * 1024  # 1MB chunks
+    total_size = 0
+    
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        total_size += len(chunk)
+        if total_size > MAX_FILE_SIZE:
+            raise HTTPException(status_code=413, detail="File too large. Max size is 10MB.")
+        contents += chunk
     
     # Validate file
     validate_file(file, contents)
@@ -48,10 +63,16 @@ async def upload_result(file: UploadFile = File(...)):
     try:
         if filename.endswith(".pdf"):
             reader = PyPDF2.PdfReader(io.BytesIO(contents))
+            # Limit number of pages to prevent DoS
+            if len(reader.pages) > MAX_PAGES:
+                raise HTTPException(status_code=400, detail=f"PDF too large. Max {MAX_PAGES} pages allowed.")
             for page in reader.pages:
                 extracted_text += page.extract_text() + "\n"
         elif filename.endswith((".png", ".jpg", ".jpeg")):
             image = Image.open(io.BytesIO(contents))
+            # Limit image dimensions to prevent memory exhaustion
+            if image.width > MAX_IMAGE_SIZE[0] or image.height > MAX_IMAGE_SIZE[1]:
+                raise HTTPException(status_code=400, detail=f"Image too large. Max dimensions: {MAX_IMAGE_SIZE[0]}x{MAX_IMAGE_SIZE[1]}")
             try:
                 extracted_text = pytesseract.image_to_string(image)
             except Exception:

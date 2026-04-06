@@ -69,8 +69,43 @@ app.state.limiter = limiter
 async def rate_limit_handler(request, exc):
     return {"status": "error", "message": "Too many requests. Please try again later."}
 
+# Add security headers middleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+class SecurityHeadersMiddleware:
+    def __init__(self, app):
+        self.app = app
+    
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            async def send_with_headers(message):
+                if message["type"] == "http.response.start":
+                    headers = message.get("headers", [])
+                    # Add security headers
+                    security_headers = [
+                        (b"x-content-type-options", b"nosniff"),
+                        (b"x-frame-options", b"DENY"),
+                        (b"x-xss-protection", b"1; mode=block"),
+                        (b"referrer-policy", b"strict-origin-when-cross-origin"),
+                        (b"permissions-policy", b"accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"),
+                    ]
+                    # Add CSP in production
+                    if not settings.DEBUG:
+                        csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self';"
+                        security_headers.append((b"content-security-policy", csp.encode()))
+                        security_headers.append((b"strict-transport-security", b"max-age=31536000; includeSubDomains"))
+                    
+                    headers.extend(security_headers)
+                    message["headers"] = headers
+                await send(message)
+            
+            await self.app(scope, receive, send_with_headers)
+        else:
+            await self.app(scope, receive, send)
+
 # Add security middleware
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Enable CORS for frontend integration
 # More restrictive in production
