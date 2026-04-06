@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Lock, ShieldCheck, Upload, LogOut, Trash2, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
@@ -10,8 +10,13 @@ interface AdminOverlayProps {
   onClose: () => void;
 }
 
+// Check if user is logged in by checking for session cookie
+function isLoggedIn(): boolean {
+  return document.cookie.includes("admin_session=");
+}
+
 export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [semester, setSemester] = useState("1st Semester");
@@ -24,14 +29,40 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
   const [view, setView] = useState<"upload" | "manage">("upload");
   const [extractedData, setExtractedData] = useState<any>(null);
 
+  // Check auth status when overlay opens
+  useEffect(() => {
+    if (isOpen) {
+      checkAuthStatus();
+    }
+  }, [isOpen]);
+
+  const checkAuthStatus = async () => {
+    if (!isLoggedIn()) {
+      setIsAuthenticated(false);
+      return;
+    }
+    
+    try {
+      const data = await api.get("/admin/verify");
+      if (data.status === "success" && data.admin) {
+        setIsAuthenticated(true);
+        fetchResults();
+      } else {
+        setIsAuthenticated(false);
+      }
+    } catch (e) {
+      setIsAuthenticated(false);
+    }
+  };
+
   const handleLogin = async () => {
     setLoading(true);
     try {
       const data = await api.post("/admin/login", { username: user, password: pass });
       if (data.status === "success") {
-        setToken(data.token);
+        setIsAuthenticated(true);
         setMsg("Welcome, Oracle Admin.");
-        fetchResults(data.token);
+        fetchResults();
       } else {
         setMsg("Invalid credentials.");
       }
@@ -42,12 +73,23 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
     }
   };
 
-  const fetchResults = async (adminToken?: string) => {
+  const handleLogout = async () => {
     try {
-      const activeToken = adminToken || token;
-      const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:9099"}/list`, {
-        headers: { "x-admin-token": activeToken || "" }
-      }).then(r => r.json());
+      await api.post("/admin/logout", {});
+    } catch (e) {
+      // Ignore error
+    }
+    setIsAuthenticated(false);
+    setUser("");
+    setPass("");
+    setResults([]);
+    setExtractedData(null);
+    setMsg("");
+  };
+
+  const fetchResults = async () => {
+    try {
+      const data = await api.get("/list");
       if (Array.isArray(data)) setResults(data);
     } catch (e) {
       console.error("Failed to fetch results", e);
@@ -65,11 +107,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
         year: item.year
       }).toString();
 
-      const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:9099"}/delete?${query}`, {
-        method: "DELETE",
-        headers: { "x-admin-token": token || "" }
-      }).then(r => r.json());
-
+      const data = await api.delete(`/delete?${query}`);
       setMsg(data.message || "Result deleted.");
       fetchResults();
     } catch (e) {
@@ -105,20 +143,14 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
     if (!extractedData) return;
     setLoading(true);
     try {
-      const pubData = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:9099"}/publish`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-admin-token": token || ""
-        },
-        body: JSON.stringify({
-          campus: extractedData.campus,
-          roll_numbers: extractedData.roll_numbers,
-          semester,
-          faculty,
-          year,
-        }),
-      }).then(r => r.json());
+      const pubData = await api.post("/publish", {
+        campus: extractedData.campus,
+        roll_numbers: extractedData.roll_numbers,
+        semester,
+        faculty,
+        year,
+      }, true); // requireCsrf = true
+      
       setMsg(pubData.message || "Result published!");
       setExtractedData(null);
       setFile(null);
@@ -154,15 +186,15 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
             <div className="relative z-10">
               <div className="flex justify-center mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose to-violet flex items-center justify-center shadow-lg shadow-rose/20">
-                  {token ? <ShieldCheck className="w-8 h-8 text-white" /> : <Lock className="w-8 h-8 text-white" />}
+                  {isAuthenticated ? <ShieldCheck className="w-8 h-8 text-white" /> : <Lock className="w-8 h-8 text-white" />}
                 </div>
               </div>
 
               <h2 className="font-display text-2xl text-center mb-4 tracking-widest text-rose">
-                {token ? "Oracle Dashboard" : "Admin Revelation"}
+                {isAuthenticated ? "Oracle Dashboard" : "Admin Revelation"}
               </h2>
 
-              {token && (
+              {isAuthenticated && (
                 <div className="flex gap-2 mb-6 justify-center">
                   <button 
                     onClick={() => setView("upload")}
@@ -179,7 +211,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                 </div>
               )}
 
-              {!token ? (
+              {!isAuthenticated ? (
                 <div className="space-y-5">
                   <div className="space-y-2">
                     <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest ml-1">Oracle Identity</label>
@@ -335,7 +367,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                   )}
 
                   <button
-                    onClick={() => setToken(null)}
+                    onClick={handleLogout}
                     className="w-full border border-white/10 py-3 rounded-xl font-mono text-[10px] tracking-widest text-white/20 hover:text-white/40 hover:bg-white/5 transition-all flex items-center justify-center gap-2"
                   >
                     <LogOut className="w-3 h-3" /> Logout
