@@ -56,8 +56,11 @@ async def query_result(roll_number: str):
             faculty = campus_data.get("faculty", "your faculty")
             year_label = campus_data.get("year", "current batch").replace("B.S.", "").strip()
             
-            # Extract detailed marks if available
-            details = campus_data.get("details", {}).get(roll_number)
+            # Extract detailed marks if available, safely avoiding NoneType errors
+            details_obj = campus_data.get("details")
+            if details_obj is None:
+                details_obj = {}
+            details = details_obj.get(roll_number)
             
             # Sanitize all output to prevent XSS
             response = {

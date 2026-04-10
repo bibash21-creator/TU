@@ -57,8 +57,8 @@ def load_results():
                     "year": r.year,
                     "status": r.status,
                     "reason": r.reason,
-                    "roll_numbers": json.loads(r.roll_numbers_json) if r.roll_numbers_json else [],
-                    "details": json.loads(r.details_json) if r.details_json else {}
+                    "roll_numbers": json.loads(r.roll_numbers_json) if r.roll_numbers_json and r.roll_numbers_json != "null" else [],
+                    "details": json.loads(r.details_json) if r.details_json and r.details_json != "null" else {}
                 })
             return results
         finally:
