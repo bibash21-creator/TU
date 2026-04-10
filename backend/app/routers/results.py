@@ -137,7 +137,7 @@ async def delete_result(request: Request, campus: str, semester: str, faculty: s
             raise HTTPException(status_code=404, detail="Result entry not found")
             
         save_results(updated_results)
-        return {"status": "success", "message": f"Results for {campus} ({semester}, {year}) deleted."}
+        return {"status": "success", "message": f"Results for {semester} ({year}) deleted."}
     except HTTPException:
         raise
     except Exception as e:
@@ -153,7 +153,7 @@ async def publish_result(request: Request, entry: ResultEntry, x_csrf_token: str
         results = load_results()
         results.append(entry.dict())
         save_results(results)
-        return {"status": "success", "message": f"Result for {entry.campus} ({entry.semester}) published successfully."}
+        return {"status": "success", "message": f"Result for {entry.semester} published successfully."}
     except Exception as e:
         import traceback
         traceback.print_exc()
