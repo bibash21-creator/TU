@@ -248,10 +248,6 @@ export default function Home() {
                     </div>
                     
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-rose/60">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span className="font-mono text-[10px] uppercase tracking-widest font-bold">{lastResult.campus}</span>
-                      </div>
                       <h2 className="text-2xl md:text-4xl font-display font-medium tracking-tight text-[var(--text)] uppercase italic">
                         {lastResult.semester}
                       </h2>

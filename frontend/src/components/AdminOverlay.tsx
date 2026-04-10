@@ -99,7 +99,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
   };
 
   const handleDelete = async (item: any) => {
-    if (!confirm(`Delete results for ${item.campus} (${item.semester})?`)) return;
+    if (!confirm(`Delete results for ${item.semester} (${item.year})?`)) return;
     setLoading(true);
     try {
       const query = new URLSearchParams({
@@ -130,7 +130,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
 
       if (data.status === "success") {
         setExtractedData(data);
-        setMsg(`Extracted for: ${data.campus}`);
+        setMsg(`Extracted ${data.roll_numbers.length} roll numbers.`);
       } else {
         setMsg(data.message || "Extraction failed.");
       }
@@ -288,11 +288,10 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
 
                       <div className="space-y-4 pt-2">
                         {extractedData ? (
-                          <div className="space-y-4 animate-fade-in">
                             <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
                               <p className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest mb-1">Oracle Detection Result:</p>
                               <div className="space-y-1">
-                                <p className="text-white text-[13px] font-display uppercase tracking-widest leading-tight">{extractedData.campus}</p>
+                                <p className="text-white text-[13px] font-display uppercase tracking-widest leading-tight">Result Data Manifested</p>
                                 <p className="text-[10px] text-white/40">{extractedData.roll_numbers.length} matching roll numbers extracted.</p>
                               </div>
                             </div>
@@ -349,9 +348,9 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                           results.map((item, idx) => (
                             <div key={idx} className="glass p-3 rounded-2xl border border-white/5 flex items-center justify-between group">
                               <div className="min-w-0">
-                                <p className="text-[10px] font-bold text-rose truncate">{item.campus}</p>
+                                <p className="text-[10px] font-bold text-rose uppercase tracking-widest">{item.faculty}</p>
                                 <p className="text-[9px] font-mono text-white/30 uppercase tracking-tight">
-                                  {item.year} · {item.semester} · {item.faculty}
+                                  {item.year} · {item.semester}
                                 </p>
                               </div>
                               <button 
