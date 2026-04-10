@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, VolumeX, Play, Pause, Loader2 } from "lucide-react";
 import Image from "next/image";
+import ThreeAvatar from "./ThreeAvatar";
 
 interface StudentData {
   roll_number: string;
@@ -226,33 +227,16 @@ export default function AvatarAnnouncer({
 
         {/* Avatar Image with Lip Sync */}
         <div className="relative h-80 flex items-center justify-center">
-          {/* Base Avatar Image */}
-          <div className="relative w-64 h-64 rounded-full overflow-hidden">
-            <Image
-              src="/oracle.png"
-              alt="AI Announcer"
-              fill
-              className="object-cover"
-              priority
-            />
-            
-            {/* Lip Sync Overlay */}
-            <motion.div
-              animate={{
-                scaleY: 0.3 + (lipSyncIntensity * 0.7),
-                opacity: isPlaying ? 0.8 : 0.3,
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="absolute bottom-[35%] left-1/2 -translate-x-1/2 w-12 h-6 bg-rose-400/60 rounded-full blur-sm"
-              style={{ transformOrigin: "center" }}
-            />
+          {/* 3D Oracle Entity */}
+          <div className="relative w-64 h-64 rounded-full overflow-hidden bg-black/40 border border-rose-500/20 shadow-2xl">
+            <ThreeAvatar isSpeaking={isPlaying} />
             
             {/* Speaking Indicator Ring */}
             {isPlaying && (
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 rounded-full border-2 border-dashed border-rose-400/30"
+                className="absolute inset-0 rounded-full border-2 border-dashed border-rose-400/30 pointer-events-none"
               />
             )}
           </div>

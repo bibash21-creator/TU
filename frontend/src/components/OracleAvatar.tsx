@@ -4,6 +4,7 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { Sparkles, Activity, ShieldCheck, Zap, Bell, Monitor } from "lucide-react";
+import ThreeAvatar from "./ThreeAvatar";
 
 interface OracleAvatarProps {
   isSpeaking: boolean;
@@ -51,45 +52,18 @@ export default function OracleAvatar({ isSpeaking }: OracleAvatarProps) {
   return (
     <div className="relative w-full h-[600px] flex items-center justify-center select-none perspective-1000">
       
-      {/* 🔮 THE ORACLE PORTAL (Living Digital Human) */}
+      {/* 🔮 THE ORACLE PORTAL (3D Digital Entity) */}
       <motion.div 
-        style={{ x: portraitX, y: portraitY, rotateX: useTransform(springY, [-500, 500], [2, -2]), rotateY: useTransform(springX, [-500, 500], [-3, 3]) }}
-        className="relative w-[340px] h-[460px] rounded-[64px] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] border border-white/10 group"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        className="relative w-[400px] h-[400px] rounded-full overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] border border-white/10 group bg-black/20"
       >
-        {/* Main AI Human Portrait */}
-        <Image 
-          src="/oracle.png" 
-          alt="Nova Oracle"
-          fill
-          className="object-cover scale-105 group-hover:scale-110 transition-transform duration-1000 grayscale-[0.2] contrast-[1.1]"
-        />
-
-        {/* Dynamic Eye Interaction (Follows Cursor) */}
-        <motion.div 
-          style={{ x: eyeX, y: eyeY }}
-          className="absolute inset-x-[35%] top-[28%] bottom-[58%] pointer-events-none z-10 opacity-30"
-        >
-           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-rose/40 rounded-full blur-md" />
-           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-rose/40 rounded-full blur-md" />
-        </motion.div>
-
-        {/* Natural Blinking Mask */}
-        <motion.div 
-          animate={{ opacity: blink ? 1 : 0 }}
-          className="absolute inset-0 bg-black pointer-events-none z-20"
-          style={{ clipPath: 'inset(33% 30% 64% 30%)', filter: 'blur(3px)' }}
-        />
+        <ThreeAvatar isSpeaking={isSpeaking} />
 
         {/* Cinematic Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#02020a] via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-violet/20 via-transparent to-rose/10" />
-
-        {/* Breathing Animation */}
-        <motion.div 
-          animate={{ opacity: [0.1, 0.2, 0.1] }}
-          transition={{ duration: 4, repeat: Infinity }}
-          className="absolute inset-0 bg-white"
-        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#02020a]/40 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-violet/10 via-transparent to-rose/10 pointer-events-none" />
       </motion.div>
 
       {/* 💠 FLOATING HUD ELEMENTS (Opposing Parallax) */}
