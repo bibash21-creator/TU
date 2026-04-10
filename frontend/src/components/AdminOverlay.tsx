@@ -288,6 +288,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
 
                       <div className="space-y-4 pt-2">
                         {extractedData ? (
+                          <div className="space-y-4 animate-fade-in">
                             <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
                               <p className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest mb-1">Oracle Detection Result:</p>
                               <div className="space-y-1">
