@@ -18,7 +18,7 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
       credentials: "include", // Include cookies
     });
-    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+    if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
     return response.json();
   },
 
@@ -40,7 +40,7 @@ export const api = {
       body: JSON.stringify(data),
       credentials: "include", // Include cookies
     });
-    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+    if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
     return response.json();
   },
 
@@ -59,7 +59,7 @@ export const api = {
       headers,
       credentials: "include", // Include cookies
     });
-    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+    if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
     return response.json();
   },
 
@@ -73,7 +73,7 @@ export const api = {
       body: formData,
       credentials: "include", // Include cookies
     });
-    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+    if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
     return response.json();
   },
 

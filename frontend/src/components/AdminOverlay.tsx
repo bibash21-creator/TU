@@ -10,9 +10,10 @@ interface AdminOverlayProps {
   onClose: () => void;
 }
 
-// Check if user is logged in by checking for session cookie
+// Check if user is logged in by checking for session proxy (csrf_token)
+// admin_session is HttpOnly and invisible to JS
 function isLoggedIn(): boolean {
-  return document.cookie.includes("admin_session=");
+  return document.cookie.includes("csrf_token=");
 }
 
 export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {

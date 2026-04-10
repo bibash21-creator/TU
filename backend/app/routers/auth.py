@@ -30,8 +30,8 @@ async def admin_login(response: Response, request: Request, credentials: LoginRe
             key="admin_session",
             value=session_token,
             httponly=True,
-            secure=True,  # Only sent over HTTPS
-            samesite="strict",
+            secure=True,  # Mandatory for SameSite=None
+            samesite="none", # Allow cross-site for Vercel -> Render
             max_age=3600  # 1 hour
         )
         
@@ -40,8 +40,8 @@ async def admin_login(response: Response, request: Request, credentials: LoginRe
             key="csrf_token",
             value=csrf_token,
             httponly=False,  # Accessible by JS for header inclusion
-            secure=True,
-            samesite="strict",
+            secure=True,     # Mandatory for SameSite=None
+            samesite="none", # Allow cross-site for Vercel -> Render
             max_age=3600
         )
         

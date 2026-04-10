@@ -110,7 +110,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 # Enable CORS for frontend integration
 # More restrictive in production
 allow_methods = ["GET", "POST", "DELETE"] if not settings.DEBUG else ["*"]
-allow_headers = ["Content-Type", "Authorization", "X-Admin-Token"] if not settings.DEBUG else ["*"]
+allow_headers = ["Content-Type", "Authorization", "X-Admin-Token", "X-CSRF-Token"] if not settings.DEBUG else ["*"]
 
 app.add_middleware(
     CORSMiddleware,
