@@ -44,50 +44,58 @@ except Exception as e:
     # We don't raise here so the app can at least start and show logs
 
 def load_results():
-    db = SessionLocal()
     try:
-        db_results = db.query(ResultTable).all()
-        results = []
-        for r in db_results:
-            results.append({
-                "campus": r.campus,
-                "semester": r.semester,
-                "faculty": r.faculty,
-                "year": r.year,
-                "status": r.status,
-                "reason": r.reason,
-                "roll_numbers": json.loads(r.roll_numbers_json) if r.roll_numbers_json else [],
-                "details": json.loads(r.details_json) if r.details_json else {}
-            })
-        return results
-    finally:
-        db.close()
+        db = SessionLocal()
+        try:
+            db_results = db.query(ResultTable).all()
+            results = []
+            for r in db_results:
+                results.append({
+                    "campus": r.campus,
+                    "semester": r.semester,
+                    "faculty": r.faculty,
+                    "year": r.year,
+                    "status": r.status,
+                    "reason": r.reason,
+                    "roll_numbers": json.loads(r.roll_numbers_json) if r.roll_numbers_json else [],
+                    "details": json.loads(r.details_json) if r.details_json else {}
+                })
+            return results
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"✧ DB Load Error: {e}")
+        return []
 
 def save_results(results):
     # Use thread lock to prevent race conditions
     with _db_lock:
-        db = SessionLocal()
         try:
-            # Use transaction for atomic operation
-            db.query(ResultTable).delete()
-            for r in results:
-                new_entry = ResultTable(
-                    campus=r.get("campus", "TU"),
-                    semester=r.get("semester"),
-                    faculty=r.get("faculty"),
-                    year=r.get("year"),
-                    status=r.get("status", "Passed"),
-                    reason=r.get("reason"),
-                    roll_numbers_json=json.dumps(r.get("roll_numbers", [])),
-                    details_json=json.dumps(r.get("details", {}))
-                )
-                db.add(new_entry)
-            db.commit()
+            db = SessionLocal()
+            try:
+                # Use transaction for atomic operation
+                db.query(ResultTable).delete()
+                for r in results:
+                    new_entry = ResultTable(
+                        campus=r.get("campus", "TU"),
+                        semester=r.get("semester"),
+                        faculty=r.get("faculty"),
+                        year=r.get("year"),
+                        status=r.get("status", "Passed"),
+                        reason=r.get("reason"),
+                        roll_numbers_json=json.dumps(r.get("roll_numbers", [])),
+                        details_json=json.dumps(r.get("details", {}))
+                    )
+                    db.add(new_entry)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise e
+            finally:
+                db.close()
         except Exception as e:
-            db.rollback()
-            raise e
-        finally:
-            db.close()
+            print(f"✧ DB Save Error: {e}")
+            raise ValueError(f"Database save error: {str(e)}")
 
 def subscribe_user(roll_number, campus, email=None, whatsapp=None):
     db = SessionLocal()
