@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Sun, Moon, ArrowRight, ShieldCheck, MapPin } from "lucide-react";
+import { Sun, Moon, ArrowRight, ShieldCheck } from "lucide-react";
 import OracleAvatar from "@/components/OracleAvatar";
 import AdminOverlay from "@/components/AdminOverlay";
 import { api } from "@/lib/api";
