@@ -69,6 +69,16 @@ app.state.limiter = limiter
 async def rate_limit_handler(request, exc):
     return {"status": "error", "message": "Too many requests. Please try again later."}
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=500,
+        content={"status": "error", "message": f"Internal Server Error: {str(exc)}"}
+    )
+
 # Add security headers middleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
