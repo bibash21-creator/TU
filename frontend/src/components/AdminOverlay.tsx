@@ -10,10 +10,8 @@ interface AdminOverlayProps {
   onClose: () => void;
 }
 
-// Check if user is logged in by checking for session proxy (csrf_token)
-// admin_session is HttpOnly and invisible to JS
 function isLoggedIn(): boolean {
-  return document.cookie.includes("csrf_token=");
+  return true; // We must blindly ping the API to know for sure in cross-domain
 }
 
 export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
@@ -47,6 +45,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
       const data = await api.get("/admin/verify");
       if (data.status === "success" && data.admin) {
         setIsAuthenticated(true);
+        if (data.csrf_token) api.setCsrfToken(data.csrf_token);
         fetchResults();
       } else {
         setIsAuthenticated(false);
@@ -62,6 +61,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
       const data = await api.post("/admin/login", { username: user, password: pass });
       if (data.status === "success") {
         setIsAuthenticated(true);
+        if (data.csrf_token) api.setCsrfToken(data.csrf_token);
         setMsg("Welcome, Oracle Admin.");
         fetchResults();
       } else {
@@ -80,6 +80,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
     } catch (e) {
       // Ignore error
     }
+    api.setCsrfToken(null);
     setIsAuthenticated(false);
     setUser("");
     setPass("");

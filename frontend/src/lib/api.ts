@@ -6,13 +6,15 @@
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:9099").replace(/\/$/, "");
 
-// Get CSRF token from cookie
+let csrfTokenMemory: string | null = null;
 function getCsrfToken(): string | null {
-  const match = document.cookie.match(/csrf_token=([^;]+)/);
-  return match ? match[1] : null;
+  return csrfTokenMemory || document.cookie.match(/csrf_token=([^;]+)/)?.[1] || null;
 }
 
 export const api = {
+  setCsrfToken(token: string | null) {
+    csrfTokenMemory = token;
+  },
   async get(endpoint: string) {
     const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
