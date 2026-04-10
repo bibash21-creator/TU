@@ -91,8 +91,7 @@ export default function Home() {
       } else {
         setLastResult(data);
         setShowAnnouncer(true); // Show AI avatar announcer
-        const msgText = currentLang === "np" ? (data.message_np || "सफलता प्राप्त भएको छ।") : (data.message_en || "Success.");
-        speakNova(msgText, currentLang);
+        // Mute page's native speakNova to let AvatarAnnouncer take control seamlessly
         toast.success("Destiny Revealed ✨");
       }
     } catch (e: any) {
@@ -227,6 +226,7 @@ export default function Home() {
                             reason: lastResult.reason,
                           }}
                           autoPlay={true}
+                          currentLang={currentLang}
                           onComplete={() => console.log("Announcement complete")}
                         />
                       </Suspense>

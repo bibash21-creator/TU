@@ -67,7 +67,7 @@ async def get_voice(text: str, lang: Optional[str] = "en"):
     return StreamingResponse(audio_generator(), media_type="audio/mpeg")
 
 @router.post("/announce")
-async def generate_announcement(student_data: dict, short: bool = False):
+async def generate_announcement(student_data: dict, short: bool = False, lang: str = "np"):
     """
     Generate Nepali announcement script and audio for student result
     
@@ -81,17 +81,17 @@ async def generate_announcement(student_data: dict, short: bool = False):
         else:
             script = generate_nepali_script(student_data)
         
-        nepali_text = script["nepali_text"]
+        text_to_speak = script["nepali_text"] if lang == "np" else script["english_text"]
         
         # Generate cache key
-        voice = "ne-NP-HemkalaNeural"
-        voice_rate = "-12%"
-        cache_key = get_cache_key(nepali_text, voice)
+        voice = "ne-NP-HemkalaNeural" if lang == "np" else "en-US-AvaNeural"
+        voice_rate = "-12%" if lang == "np" else "-10%"
+        cache_key = get_cache_key(text_to_speak, voice)
         cache_path = os.path.join(CACHE_DIR, f"{cache_key}.mp3")
         
         # Generate audio if not cached
         if not os.path.exists(cache_path):
-            await generate_audio_file(nepali_text, voice, voice_rate, cache_path)
+            await generate_audio_file(text_to_speak, voice, voice_rate, cache_path)
         
         # Return script and audio URL
         return {

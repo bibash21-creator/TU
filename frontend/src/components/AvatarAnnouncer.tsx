@@ -19,6 +19,7 @@ interface StudentData {
 interface AvatarAnnouncerProps {
   studentData: StudentData;
   autoPlay?: boolean;
+  currentLang?: string;
   onComplete?: () => void;
 }
 
@@ -34,6 +35,7 @@ interface AnnouncementData {
 export default function AvatarAnnouncer({ 
   studentData, 
   autoPlay = true,
+  currentLang = "np",
   onComplete 
 }: AvatarAnnouncerProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +76,7 @@ export default function AvatarAnnouncer({
     setIsLoading(true);
     try {
       const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:9099").replace(/\/$/, "");
-      const response = await fetch(`${API_BASE_URL}/announce`, {
+      const response = await fetch(`${API_BASE_URL}/announce?lang=${currentLang}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(studentData),
