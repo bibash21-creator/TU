@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Nova Oracle"
     VERSION: str = "2.2.0"
     DEBUG: bool = True
-    PORT: int = 9099
+    PORT: int = int(os.environ.get("PORT", 9099))
     HOST: str = "0.0.0.0"
 
     # Security
