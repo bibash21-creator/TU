@@ -157,8 +157,8 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
       setExtractedData(null);
       setFile(null);
       fetchResults();
-    } catch (e) {
-      setMsg("Publishing failed.");
+    } catch (e: any) {
+      setMsg(e.message || "Publishing failed.");
     } finally {
       setLoading(false);
     }

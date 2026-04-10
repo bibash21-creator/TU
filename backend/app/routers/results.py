@@ -118,28 +118,40 @@ async def list_results(request: Request):
 async def delete_result(request: Request, campus: str, semester: str, faculty: str, year: str, x_csrf_token: str = Header(None)):
     verify_admin_auth(request, x_csrf_token)
     
-    results = load_results()
-    original_count = len(results)
-    
-    # Filter out the matching entry
-    updated_results = [r for r in results if not (
-        r.get("campus") == campus and 
-        r.get("semester") == semester and 
-        r.get("faculty") == faculty and 
-        r.get("year") == year
-    )]
-    
-    if len(updated_results) == original_count:
-        raise HTTPException(status_code=404, detail="Result entry not found")
+    try:
+        results = load_results()
+        original_count = len(results)
         
-    save_results(updated_results)
-    return {"status": "success", "message": f"Results for {campus} ({semester}, {year}) deleted."}
+        # Filter out the matching entry
+        updated_results = [r for r in results if not (
+            r.get("campus") == campus and 
+            r.get("semester") == semester and 
+            r.get("faculty") == faculty and 
+            r.get("year") == year
+        )]
+        
+        if len(updated_results) == original_count:
+            raise HTTPException(status_code=404, detail="Result entry not found")
+            
+        save_results(updated_results)
+        return {"status": "success", "message": f"Results for {campus} ({semester}, {year}) deleted."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=f"System Database Error: {str(e)}")
 
 @router.post("/publish")
 async def publish_result(request: Request, entry: ResultEntry, x_csrf_token: str = Header(None)):
     verify_admin_auth(request, x_csrf_token)
     
-    results = load_results()
-    results.append(entry.dict())
-    save_results(results)
-    return {"status": "success", "message": f"Result for {entry.campus} ({entry.semester}) published successfully."}
+    try:
+        results = load_results()
+        results.append(entry.dict())
+        save_results(results)
+        return {"status": "success", "message": f"Result for {entry.campus} ({entry.semester}) published successfully."}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=f"System Database Error: {str(e)}")
