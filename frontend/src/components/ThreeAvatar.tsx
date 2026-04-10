@@ -24,7 +24,7 @@ function OracleParticles({ isSpeaking }: { isSpeaking: boolean }) {
   }, []);
 
   useFrame((state) => {
-    const time = state.clock.getElapsedTime();
+    const time = state.clock.elapsedTime;
     if (pointsRef.current) {
       pointsRef.current.rotation.y = time * 0.1;
       pointsRef.current.rotation.z = time * 0.05;
@@ -53,7 +53,7 @@ function CentralCore({ isSpeaking }: { isSpeaking: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null!);
 
   useFrame((state) => {
-    const time = state.clock.getElapsedTime();
+    const time = state.clock.elapsedTime;
     if (meshRef.current) {
       const scale = isSpeaking ? 1.2 + Math.sin(time * 10) * 0.1 : 1.0;
       meshRef.current.scale.setScalar(scale);

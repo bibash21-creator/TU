@@ -179,7 +179,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
-            className="w-full max-w-[450px] glass rounded-[32px] p-10 shadow-2xl relative overflow-hidden"
+            className="w-full max-w-[650px] glass rounded-[24px] p-8 shadow-2xl relative overflow-hidden"
           >
             {/* Background Glow */}
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-rose/20 blur-[60px] rounded-full" />
@@ -213,7 +213,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
               )}
 
               {!isAuthenticated ? (
-                <div className="space-y-5">
+                <div className="space-y-5 max-w-sm mx-auto">
                   <div className="space-y-2">
                     <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest ml-1">Oracle Identity</label>
                     <input
@@ -221,7 +221,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                       value={user}
                       onChange={(e) => setUser(e.target.value)}
                       placeholder="Username"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-body outline-none focus:border-rose/50 transition-all placeholder:text-white/10"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-body outline-none focus:border-rose/50 transition-all placeholder:text-white/10 text-white"
                     />
                   </div>
                   <div className="space-y-2">
@@ -231,7 +231,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                       value={pass}
                       onChange={(e) => setPass(e.target.value)}
                       placeholder="Password"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-body outline-none focus:border-rose/50 transition-all placeholder:text-white/10"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-body outline-none focus:border-rose/50 transition-all placeholder:text-white/10 text-white"
                     />
                   </div>
                   <button
@@ -246,7 +246,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                 <div className="space-y-4">
                   {view === "upload" ? (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest ml-1">Semester</label>
                             <select 
@@ -271,19 +271,18 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                               ))}
                             </select>
                           </div>
-                      </div>
-
-                      <div className="space-y-2">
-                          <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest ml-1">Batch Year (B.S.)</label>
-                          <select 
-                            value={year}
-                            onChange={(e) => setYear(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 font-body outline-none text-white/80"
-                          >
-                            {Array.from({ length: 41 }, (_, i) => 2060 + i).map(y => (
-                              <option key={y} value={y.toString()} className="bg-[#02020a]">{y} B.S.</option>
-                            ))}
-                          </select>
+                          <div className="space-y-2">
+                              <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest ml-1">Batch Year</label>
+                              <select 
+                                value={year}
+                                onChange={(e) => setYear(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 font-body outline-none text-white/80"
+                              >
+                                {Array.from({ length: 41 }, (_, i) => 2060 + i).map(y => (
+                                  <option key={y} value={y.toString()} className="bg-[#02020a]">{y}</option>
+                                ))}
+                              </select>
+                          </div>
                       </div>
 
                       <div className="space-y-4 pt-2">
@@ -309,7 +308,7 @@ export default function AdminOverlay({ isOpen, onClose }: AdminOverlayProps) {
                           <div className="space-y-4">
                              <div className="space-y-2">
                                <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest ml-1">Result Document (PDF/Image)</label>
-                               <div className="relative border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 hover:border-rose/30 transition-colors group cursor-pointer">
+                               <div className="relative border-2 border-dashed border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:border-rose/30 transition-colors group cursor-pointer">
                                   <input 
                                     type="file" 
                                     onChange={(e) => setFile(e.target.files?.[0] || null)}

@@ -80,7 +80,7 @@ class SecurityHeadersMiddleware:
         if scope["type"] == "http":
             async def send_with_headers(message):
                 if message["type"] == "http.response.start":
-                    headers = message.get("headers", [])
+                    headers = list(message.get("headers", []))
                     # Add security headers
                     security_headers = [
                         (b"x-content-type-options", b"nosniff"),
@@ -108,16 +108,13 @@ app.add_middleware(SecurityMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Enable CORS for frontend integration
-# More restrictive in production
-allow_methods = ["GET", "POST", "DELETE"] if not settings.DEBUG else ["*"]
-allow_headers = ["Content-Type", "Authorization", "X-Admin-Token", "X-CSRF-Token"] if not settings.DEBUG else ["*"]
-
+# Allowed origins defined in settings, but methods and headers broadly allowed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=allow_methods,
-    allow_headers=allow_headers,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include Routers with prefixes for clarity
