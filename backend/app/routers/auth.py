@@ -64,6 +64,6 @@ async def verify_session(request: Request):
     try:
         serializer = get_serializer()
         data = serializer.loads(session_cookie, max_age=3600)
-        return {"status": "success", "admin": data.get("admin")}
+        return {"status": "success", "admin": data.get("admin"), "csrf_token": request.cookies.get("csrf_token")}
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
